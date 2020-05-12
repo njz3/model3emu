@@ -559,6 +559,7 @@ bool SCSP_Init(const Util::Config::Node &config, int n)
 {
 	s_config = &config;
 	s_multiThreaded = config["MultiThreaded"].ValueAs<bool>();
+	SysFPS = config["SoundFreq"].ValueAs<float>();	// should this be updated to reflect actual FPS?
 
 	if(n==2)
 	{
@@ -1778,10 +1779,10 @@ void SCSP_DoMasterSamples(int nsamples)
 	 */
 	float balance = (float) s_config->Get("Balance").ValueAs<float>();
 	if (balance < -100.0f)
-	  balance = -100.0f;
-  else if (balance > 100.0f)
-    balance = 100.0f;
-  balance /= 100.0f;
+		balance = -100.0f;
+	else if (balance > 100.0f)
+		balance = 100.0f;
+	balance /= 100.0f;
 	float masterBalance = 1.0f+balance;
 	float slaveBalance = 1.0f-balance;
 
@@ -2332,7 +2333,6 @@ void SCSP_LoadState(CBlockFile *StateFile)
 
 void SCSP_SetBuffers(INT16 *leftBufferPtr, INT16 *rightBufferPtr, int bufferLength)
 {
-	SysFPS = 60.0;	// should this be updated to reflect actual FPS?
 	bufferl = leftBufferPtr;
 	bufferr = rightBufferPtr;
 	length = bufferLength;
