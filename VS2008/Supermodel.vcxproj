@@ -96,12 +96,12 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.4;..\Libraries\SDL2-2.0.12\include;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;glu32.lib;WbemUuid.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -129,12 +129,12 @@ xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDi
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.4;..\Libraries\SDL2-2.0.12\include;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;glu32.lib;WbemUuid.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -165,6 +165,7 @@ xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDi
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;glu32.lib;WbemUuid.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -202,6 +203,7 @@ xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDi
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;glu32.lib;WbemUuid.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
