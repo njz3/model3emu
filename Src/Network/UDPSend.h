@@ -3,6 +3,7 @@
 
 #include "UDPPacket.h"
 #include "WinSockWrap.h"
+#include <string>
 #include <vector>
 #include <thread>
 

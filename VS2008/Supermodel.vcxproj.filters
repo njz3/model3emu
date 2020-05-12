@@ -440,6 +440,9 @@
     <ClCompile Include="..\Src\Sound\MPEG\MpegAudio.cpp">
       <Filter>Source Files\Sound\MPEG</Filter>
     </ClCompile>
+    <ClCompile Include="..\Src\OSD\Windows\NetOutputs.cpp">
+      <Filter>Source Files\OSD\Windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="..\Src\CPU\68K\Turbo68K\Turbo68K.asm">
@@ -807,6 +810,9 @@
     </ClInclude>
     <ClInclude Include="..\Src\Pkgs\minimp3.h">
       <Filter>Header Files\Pkgs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Src\OSD\Windows\NetOutputs.h">
+      <Filter>Header Files\OSD\Windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

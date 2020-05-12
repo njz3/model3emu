@@ -1,1 +1,4 @@
 Source code for Third-party libraries needs to be placed in here.
+
+zlib-1.2.4 (use zlib1211.zip)
+SDL2-2.0.12 (SDL2-2.0.12.zip)
