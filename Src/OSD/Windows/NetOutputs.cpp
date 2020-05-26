@@ -44,12 +44,6 @@ bool CNetOutputs::Initialize()
         return false;
     }
 
-    // Broadcast we exist
-    if (SendUdpBroadcastWithId() != 0) {
-        MessageBoxA(NULL, "Unable to notify game with udp broadcast", NULL, NULL);
-        return false;
-    }
-
     // Run tcp server thread
     if (CreateServerThread() != 0) {
         MessageBoxA(NULL, "Unable to start server thread for tcp outputs", NULL, NULL);
@@ -61,7 +55,9 @@ bool CNetOutputs::Initialize()
 void CNetOutputs::Attached()
 {
     // Broadcast a startup message
-
+    if (SendUdpBroadcastWithId() != 0) {
+        MessageBoxA(NULL, "Unable to notify game with udp broadcast", NULL, NULL);
+    }
 }
 
 void CNetOutputs::SendOutput(EOutputs output, UINT8 prevValue, UINT8 value)
