@@ -369,10 +369,6 @@
         <file offset="0x400000" name="mpr-21033.24" crc32="0x253D3C70" />
         <file offset="0x800000" name="mpr-21032.23" crc32="0x3D3FF407" />
       </region>
-      <!-- Spindizzi notes : apparently it uses the same rom from scud race-->
-      <region name="driveboard_program" stride="1" chunk_size="1">
-        <file offset="0" name="epr-19338a.bin" crc32="0xC9FAC464" />
-      </region>
     </roms>
   </game>
 
@@ -542,10 +538,6 @@
         <file offset="0x800000" name="mpr-22888.23" crc32="0x018FCF22" />
         <file offset="0xC00000" name="mpr-22890.25" crc32="0xB638BD7C" />
       </region>
-      <!-- Spindizzi notes : apparently it uses the same rom from scud race-->
-      <region name="driveboard_program" stride="1" chunk_size="1">
-        <file offset="0" name="epr-19338a.bin" crc32="0xC9FAC464" />
-      </region>
     </roms>
   </game>
 
@@ -571,21 +563,21 @@
       <!-- Hand written SEGA labels in this form:  TITLE: QQ  ROM NO: IC17  CHECK SUM: 551B  9/12-'99 -->
       <region name="crom" stride="8" chunk_size="2" byte_swap="true">
         <file offset="0" name="qq.ic20" crc32="0xB12FE61C" />
-        <file offset="2" name="qq.ic19" crc32="0xCA02F571" /> <!-- BAD_DUMP -->
-        <file offset="4" name="qq.ic18" crc32="0xE33DA02F" /> <!-- BAD_DUMP -->
-        <file offset="6" name="qq.ic17" crc32="0x1DB889E0" /> <!-- BAD_DUMP -->
+        <file offset="2" name="qq.ic19" crc32="0xA646C7E5" />
+        <file offset="4" name="qq.ic18" crc32="0x17B0BB2C" /> 
+        <file offset="6" name="qq.ic17" crc32="0x420B5EB8" />
       </region>
       <!-- Hand written SEGA labels in this form:  TITLE: QQ  ROM NO: IC13  CHECK SUM: 6B84  9/12-'99 -->
       <region name="banked_crom" stride="8" chunk_size="2" byte_swap="true">
         <!-- CROM3 -->
-        <file offset="0x3000000" name="qq.ic16" crc32="0x3525B46D" />
-        <file offset="0x3000002" name="qq.ic15" crc32="0x6EE8AF07" /> <!-- BAD_DUMP -->
-        <file offset="0x3000004" name="qq.ic14" crc32="0x678B9C2C" /> <!-- BAD_DUMP -->
-        <file offset="0x3000006" name="qq.ic13" crc32="0x75413A76" /> <!-- BAD_DUMP -->
+        <file offset="0x3000000" name="qq.ic16" crc32="0x3634F178" />
+        <file offset="0x3000002" name="qq.ic15" crc32="0x91C5A2A1" />
+        <file offset="0x3000004" name="qq.ic14" crc32="0xB41DB79B" />
+        <file offset="0x3000006" name="qq.ic13" crc32="0xBF3ACA1B" />
       </region>
       <!-- Hand written SEGA labels in this form:  TITLE: QQ  ROM NO: IC21  CHECK SUM: 0994  9/12-'99 -->
       <region name="sound_program" stride="1" chunk_size="1" byte_swap="true">
-        <file offset="0" name="qq.ic21" crc32="0xD8496BCA" /> <!-- BAD_DUMP -->
+        <file offset="0" name="qq.ic21" crc32="0x0C55CA5F" />
       </region>
     </roms>
   </game>
@@ -1088,7 +1080,7 @@
     </roms>
   </game>
 
-  <game name="lostwsgo" parent="lostwsga">
+  <game name="lostwsgp" parent="lostwsga">
     <identity>
       <title>The Lost World</title>
       <version>Original Revision</version>
