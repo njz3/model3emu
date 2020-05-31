@@ -9,7 +9,7 @@ SET VERSION=%TAG%-%HASH%
 ECHO %VERSION%
 
 SET ZIP=%ProgramFiles%\7-Zip\7z.exe
-SET ARCHIVE_NAME=vJoyIOFeederSetup_%VERSION%.zip
+SET ARCHIVE_NAME=supermodel_%VERSION%.zip
 SET VS=2019\Community
 SET BUILDER=%ProgramFiles(x86)%\Microsoft Visual Studio\%VS%\MSBuild\Current\Bin\MSBuild.exe
 SET DEVENV=%ProgramFiles(x86)%\Microsoft Visual Studio\%VS%\Common7\IDE\devenv.com
