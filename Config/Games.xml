@@ -369,6 +369,10 @@
         <file offset="0x400000" name="mpr-21033.24" crc32="0x253D3C70" />
         <file offset="0x800000" name="mpr-21032.23" crc32="0x3D3FF407" />
       </region>
+	  <!-- Spindizzi notes : apparently it uses the same rom from scud race-->
+      <region name="driveboard_program" stride="1" chunk_size="1">
+        <file offset="0" name="epr-19338a.bin" crc32="0xC9FAC464" />
+      </region>
     </roms>
   </game>
 
@@ -537,6 +541,10 @@
         <file offset="0x400000" name="mpr-22889.24" crc32="0x4F9BA45D" />
         <file offset="0x800000" name="mpr-22888.23" crc32="0x018FCF22" />
         <file offset="0xC00000" name="mpr-22890.25" crc32="0xB638BD7C" />
+      </region>
+	  <!-- Spindizzi notes : apparently it uses the same rom from scud race-->
+      <region name="driveboard_program" stride="1" chunk_size="1">
+        <file offset="0" name="epr-19338a.bin" crc32="0xC9FAC464" />
       </region>
     </roms>
   </game>
