@@ -211,6 +211,7 @@
 #include <functional>
 #include <set>
 #include <iostream>
+#include <algorithm>
 
 /******************************************************************************
  Model 3 Inputs
@@ -971,7 +972,7 @@ UINT8 CModel3::Read8(UINT32 addr)
     }
 #endif
 #ifdef NET_BOARD
-  if (m_game.stepping != "1.0" && (NetBoard.IsAttached() && (m_config["EmulateNet"].ValueAs<bool>()))) // check for Step 1.0
+  if (m_runNetBoard)
   {
     switch ((addr & 0x3ffff) >> 16)
     {
@@ -983,9 +984,9 @@ UINT8 CModel3::Read8(UINT32 addr)
       if (addr > 0xc00101ff)
       {
         printf("R8 ATTENTION OUT OF RANGE\n");
-        MessageBox(NULL, "Out of Range", NULL, MB_OK);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Info", "Out of Range", NULL);
       }
-      printf("R8 ioreg @%x=%x\n", (addr & 0x1FF), netBuffer[0x10000 + ((addr & 0x1FF) / 2)]);
+      //printf("R8 ioreg @%x=%x\n", (addr & 0x1FF), netBuffer[0x10000 + ((addr & 0x1FF) / 2)]);
       return netBuffer[0x10000 + ((addr & 0x1FF) / 2)];
 
     case 2:
@@ -993,7 +994,7 @@ UINT8 CModel3::Read8(UINT32 addr)
       if (addr > 0xc002ffff)
       {
         printf("R8 ATTENTION OUT OF RANGE\n");
-        MessageBox(NULL, "Out of Range", NULL, MB_OK);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Info", "Out of Range", NULL);
       }
       //printf("R8 netram @%x=%x\n", (addr & 0x1FFFF), netRAM[addr & 0x1ffff]);
       return netRAM[((addr & 0x1FFFF) / 2)];
@@ -1003,7 +1004,7 @@ UINT8 CModel3::Read8(UINT32 addr)
     
     default:
       printf("R8 ATTENTION OUT OF RANGE\n");
-      MessageBox(NULL, "Out of Range", NULL, MB_OK);
+      SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Info", "Out of Range", NULL);
       break;
     }
   }
@@ -1129,7 +1130,7 @@ UINT16 CModel3::Read16(UINT32 addr)
   default:
 #ifdef NET_BOARD
     printf("CMODEL3 : unknown R16 : %x (%x)\n", addr, addr >> 24);
-    MessageBox(NULL, "CMODEL3 : Unknown R16", NULL, MB_OK);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Info", "CMODEL3 : Unknown R16", NULL);
 #endif
     break;
   }
@@ -1274,7 +1275,7 @@ UINT32 CModel3::Read32(UINT32 addr)
       break;
 #endif
 #ifdef NET_BOARD
-    if (m_game.stepping != "1.0" && (NetBoard.IsAttached() && (m_config["EmulateNet"].ValueAs<bool>()))) // check for Step 1.0
+    if (m_runNetBoard)
     {
       UINT32 result;
       
@@ -1283,7 +1284,8 @@ UINT32 CModel3::Read32(UINT32 addr)
       case 0:
         //printf("R32 netbuffer @%x=%x\n", (addr & 0xFFFF), FLIPENDIAN32(*(UINT32 *)&netBuffer[(addr & 0xFFFF)]));
         result = *(UINT32 *)&netBuffer[(addr & 0xFFFF)];
-        return _rotl(FLIPENDIAN32(result), 16);
+        result = FLIPENDIAN32(result);
+        return ((result << 16) | (result >> 16));
         //return FLIPENDIAN32(result); // result
 
       case 1: // ioreg 32bits access to 16bits range
@@ -1295,10 +1297,10 @@ UINT32 CModel3::Read32(UINT32 addr)
 
         UINT32 test;
         test = (*(UINT32 *)&netBuffer[0x10000 + ((addr & 0x1FF) / 2)]);
-        if (((FLIPENDIAN32(test) & 0x00ff0000) != 0x00900000) && ((FLIPENDIAN32(test) & 0x00ff0000) != 0x00a00000) && ((FLIPENDIAN32(test) & 0x00ff0000) != 0x00b00000) && ((FLIPENDIAN32(test) & 0x00ff0000) != 0x00800000) && ((FLIPENDIAN32(test) & 0x00ff0000) != 0x00f00000)) 
+        /*if (((FLIPENDIAN32(test) & 0x00ff0000) != 0x00900000) && ((FLIPENDIAN32(test) & 0x00ff0000) != 0x00a00000) && ((FLIPENDIAN32(test) & 0x00ff0000) != 0x00b00000) && ((FLIPENDIAN32(test) & 0x00ff0000) != 0x00800000) && ((FLIPENDIAN32(test) & 0x00ff0000) != 0x00f00000)) 
         {
-          printf("R32 ioreg @%x=%04x\n", (addr /*& 0x1FF*/), FLIPENDIAN32(test) >> 16);
-        }
+          printf("R32 ioreg @%x=%04x\n", (addr), FLIPENDIAN32(test) >> 16);
+        }*/
         result = (*(UINT32 *)&netBuffer[0x10000 + ((addr & 0x1FF) / 2)]) & 0x0000ffff;
         return FLIPENDIAN32(result);
 
@@ -1450,7 +1452,7 @@ void CModel3::Write8(UINT32 addr, UINT8 data)
       goto Unknown8;
 #endif
 #ifdef NET_BOARD
-    if (m_game.stepping != "1.0" && (NetBoard.IsAttached() && (m_config["EmulateNet"].ValueAs<bool>())))
+    if (m_runNetBoard)
     {
       //printf("CModel 3 : write8 %x<-%x\n", addr, data);
 
@@ -1467,7 +1469,7 @@ void CModel3::Write8(UINT32 addr, UINT8 data)
           printf("W8 ATTENTION OUT OF RANGE\n");
         }
 
-        printf("W8 ioreg @%x<-%x\n", (addr & 0x1FF), data);
+        //printf("W8 ioreg @%x<-%x\n", (addr & 0x1FF), data);
         *(UINT8 *)&netBuffer[0x10000 + ((addr & 0x1FF) / 2)] = data;
         break;
 
@@ -1792,14 +1794,16 @@ void CModel3::Write32(UINT32 addr, UINT32 data)
       goto Unknown32;
 #endif
 #ifdef NET_BOARD
-    if (m_game.stepping != "1.0" && (NetBoard.IsAttached() && (m_config["EmulateNet"].ValueAs<bool>()))) // assuming there is no scsi card for step>1.0 because same address for network card (right or wrong ??)
+    if (m_runNetBoard)
     {
+      UINT32 temp;
       switch ((addr & 0x3ffff) >> 16)
       {
       case 0:
         //printf("W32 netbuffer @%x<-%x\n", (addr & 0xFFFF), data);
         //*(UINT32 *)&netBuffer[(addr & 0xFFFF)] = FLIPENDIAN32(data);
-        *(UINT32 *)&netBuffer[(addr & 0xFFFF)] = _rotl(FLIPENDIAN32(data), 16);
+        temp = FLIPENDIAN32(data);
+        *(UINT32 *)&netBuffer[(addr & 0xFFFF)] = (temp << 16) | (temp >> 16);
         break;
 
       case 1: // ioreg 32bits access to 16bits range
@@ -1808,7 +1812,7 @@ void CModel3::Write32(UINT32 addr, UINT32 data)
           printf("W32 ATTENTION OUT OF RANGE\n");
         }
 
-        printf("W32 ioreg @%x<-%04x\n", (addr /*& 0x1FF*/), data>>16);
+        //printf("W32 ioreg @%x<-%04x\n", (addr /*& 0x1FF*/), data>>16);
         *(UINT16 *)&netBuffer[0x10000 + ((addr & 0x1FF) / 2)] = FLIPENDIAN16(data >> 16);
         break;
 
@@ -1861,7 +1865,7 @@ void CModel3::Write32(UINT32 addr, UINT32 data)
   default:
   Unknown32:
 #ifdef NET_BOARD
-    printf("CMODEL3 : unknown W32 : %x (%x) data=%d\n", addr,addr >> 24,data);
+      if (m_runNetBoard) printf("CMODEL3 : unknown W32 : %x (%x) data=%d\n", addr,addr >> 24,data);
 #endif
     //printf("PC=%08X\twrite32: %08X=%08X\n", ppc_get_pc(), addr, data);
     DebugLog("PC=%08X\twrite32: %08X=%08X\n", ppc_get_pc(), addr, data);
@@ -2471,9 +2475,6 @@ void CModel3::DumpTimings(void)
     timings.syncTicks, (timings.syncTicks > 1 ? '!' : ','),
     timings.sndTicks, (timings.sndTicks > 10 ? '!' : ','),
     timings.drvTicks, (timings.drvTicks > 10 ? '!' : ','),
-#ifdef NET_BOARD
-  timings.netTicks, (timings.netTicks > 10 ? '!' : ','),
-#endif
     timings.frameTicks, (timings.frameTicks > 16 ? '!' : ' '));
 }
 
@@ -2868,30 +2869,6 @@ void CModel3::Reset(void)
  Initialization, Shutdown, and ROM Management
 ******************************************************************************/
 
-// Offsets of memory regions within Model 3's pool
-#define OFFSET_RAM          0         // 8 MB
-#define OFFSET_CROM         0x800000  // 8 MB (fixed CROM)
-#define OFFSET_CROMxx       0x1000000 // 128 MB (banked CROM0-3 must follow fixed CROM)
-#define OFFSET_VROM         0x9000000 // 64 MB
-#define OFFSET_BACKUPRAM    0xD000000 // 128 KB
-#define OFFSET_SECURITYRAM  0xD020000 // 128 KB
-#define OFFSET_SOUNDROM     0xD040000 // 512 KB (68K sound board program)
-#define OFFSET_SAMPLEROM    0xD0C0000 // 16 MB (sound board samples)
-#define OFFSET_DSBPROGROM   0xE0C0000 // 128 KB (DSB program)
-#define OFFSET_DSBMPEGROM   0xE0E0000 // 16 MB (DSB MPEG data -- Z80 version only uses 8MB)
-#define OFFSET_DRIVEROM     0xF0E0000 // 64 KB
-#ifndef NET_BOARD
-#define MEMORY_POOL_SIZE    (0x800000 + 0x800000 + 0x8000000 + 0x4000000 + 0x20000 + 0x20000 + 0x80000 + 0x1000000 + 0x20000 + 0x1000000 + 0x10000)
-#endif
-#ifdef NET_BOARD
-#define OFFSET_NETBUFFER    0xC000000 // not really 128kb (64kb buffer 0000-ffff + i/o 10000-101ff)
-#define OFFSET_NETRAM       0xC020000 // 128 KB (c0020000-c003ffff)
-#define MEMORY_POOL_SIZE    (0x800000 + 0x800000 + 0x8000000 + 0x4000000 + 0x20000 + 0x20000 + 0x80000 + 0x1000000 + 0x20000 + 0x1000000 + 0x10000 + 0x40000)
-							//8MB		8MB			128MB		64MB		128KB		128KB	512KB		16MB		128KB	16MB		64KB		256KB
-#endif
-// 64-bit magic number used to detect loading of optional ROMs
-#define MAGIC_NUMBER  0x4C444D5245505553ULL
-
 const Game &CModel3::GetGame() const
 {
   return m_game;
@@ -3047,12 +3024,17 @@ bool CModel3::LoadGame(const Game &game, const ROMSet &rom_set)
   
   // Print game information
   std::set<std::string> extra_hw;
+  std::string netboard_present = game.netboard_present;
+  std::transform(netboard_present.begin(), netboard_present.end(), netboard_present.begin(), ::tolower);
+
   if (DSB)
     extra_hw.insert(Util::Format() << "Digital Sound Board (Type " << game.mpeg_board << ")");
   if (rom_set.get_rom("driveboard_program").size)
     extra_hw.insert("Drive Board");
   if (game.encryption_key)
     extra_hw.insert("Security Board");
+  if (netboard_present.compare("true")==0)
+      extra_hw.insert("Net Board");
   if (!game.version.empty())
     std::cout << "    Title:          " << game.title << " (" << game.version << ")" << std::endl;
   else
@@ -3068,6 +3050,12 @@ bool CModel3::LoadGame(const Game &game, const ROMSet &rom_set)
   m_game = game;
 #ifdef NET_BOARD
   NetBoard.GetGame(m_game);
+  if (OKAY != NetBoard.Init(netRAM, netBuffer))
+  {
+      return FAIL;
+  }
+
+  m_runNetBoard = m_game.stepping != "1.0" && (NetBoard.IsAttached() && (m_config["EmulateNet"].ValueAs<bool>()));
 #endif
   return OKAY;
 }
@@ -3100,32 +3088,67 @@ void CModel3::AttachOutputs(COutputs *OutputsPtr)
   DebugLog("Model 3 attached outputs\n");
 }
 
+const static int RAM_SIZE			= 0x800000;		//8MB
+const static int CROM_SIZE			= 0x800000;		//8MB
+const static int CROMxx_SIZE		= 0x8000000;	//128MB
+const static int VROM_SIZE			= 0x4000000;	//64MB
+const static int BACKUPRAM_SIZE		= 0x20000;		//128KB
+const static int SECURITYRAM_SIZE	= 0x20000;		//128KB
+const static int SOUNDROM_SIZE		= 0x80000;		//512KB
+const static int SAMPLEROM_SIZE		= 0x1000000;	//16MB
+const static int DSBPROGROM_SIZE	= 0x20000;		//128KB
+const static int DSBMPEGROM_SIZE	= 0x1000000;	//16MB
+const static int DRIVEROM_SIZE		= 0x10000;		//64KB
+const static int NETBUFFER_SIZE		= 0x20000;		//128KB
+const static int NETRAM_SIZE		= 0x20000;		//128KB
+
+const static int MEM_POOL_SIZE		= RAM_SIZE + CROM_SIZE +
+                                        CROMxx_SIZE + VROM_SIZE +
+                                        BACKUPRAM_SIZE + SECURITYRAM_SIZE +
+                                        SOUNDROM_SIZE + SAMPLEROM_SIZE +
+                                        DSBPROGROM_SIZE + DSBMPEGROM_SIZE +
+                                        DRIVEROM_SIZE + NETBUFFER_SIZE +
+                                        NETRAM_SIZE;
+
+const static int RAM_OFFSET			= 0;
+const static int CROM_OFFSET		= RAM_OFFSET + RAM_SIZE;
+const static int CROMxx_OFFSET		= CROM_OFFSET + CROM_SIZE;
+const static int VROM_OFFSET		= CROMxx_OFFSET + CROMxx_SIZE;
+const static int BACKUPRAM_OFFSET	= VROM_OFFSET + VROM_SIZE;
+const static int SECURITYRAM_OFFSET	= BACKUPRAM_OFFSET + BACKUPRAM_SIZE;
+const static int SOUNDROM_OFFSET	= SECURITYRAM_OFFSET + SECURITYRAM_SIZE;
+const static int SAMPLEROM_OFFSET	= SOUNDROM_OFFSET + SOUNDROM_SIZE;
+const static int DSBPROGROM_OFFSET	= SAMPLEROM_OFFSET + SAMPLEROM_SIZE;
+const static int DSBMPEGROM_OFFSET	= DSBPROGROM_OFFSET + DSBPROGROM_SIZE;
+const static int DRIVEROM_OFFSET	= DSBMPEGROM_OFFSET + DSBMPEGROM_SIZE;
+const static int NETBUFFER_OFFSET	= DRIVEROM_OFFSET + DRIVEROM_SIZE;
+const static int NETRAM_OFFSET		= NETBUFFER_OFFSET + NETBUFFER_SIZE;
+
 // Model 3 initialization. Some initialization is deferred until ROMs are loaded in LoadROMSet()
 bool CModel3::Init(void)
-{
-  float memSizeMB = (float)MEMORY_POOL_SIZE/(float)0x100000;
-  
+{ 
+  float memSizeMB = (float)MEM_POOL_SIZE / (float)0x100000;
+
   // Allocate all memory for ROMs and PPC RAM
-  memoryPool = new(std::nothrow) UINT8[MEMORY_POOL_SIZE];
+  memoryPool = new(std::nothrow) UINT8[MEM_POOL_SIZE];
   if (NULL == memoryPool)
     return ErrorLog("Insufficient memory for Model 3 object (needs %1.1f MB).", memSizeMB);
-  memset(memoryPool, 0, MEMORY_POOL_SIZE);
+  memset(memoryPool, 0, MEM_POOL_SIZE);
     
   // Set up pointers
-  ram = &memoryPool[OFFSET_RAM];
-  crom = &memoryPool[OFFSET_CROM];
-  vrom = &memoryPool[OFFSET_VROM];
-  soundROM = &memoryPool[OFFSET_SOUNDROM];
-  sampleROM = &memoryPool[OFFSET_SAMPLEROM];
-  dsbROM = &memoryPool[OFFSET_DSBPROGROM];
-  mpegROM = &memoryPool[OFFSET_DSBMPEGROM];
-  backupRAM = &memoryPool[OFFSET_BACKUPRAM];
-  securityRAM = &memoryPool[OFFSET_SECURITYRAM];
-  driveROM = &memoryPool[OFFSET_DRIVEROM];
-#ifdef NET_BOARD
-  netRAM = &memoryPool[OFFSET_NETRAM];
-  netBuffer = &memoryPool[OFFSET_NETBUFFER];
-#endif
+  ram = &memoryPool[RAM_OFFSET];
+  crom = &memoryPool[CROM_OFFSET];
+  vrom = &memoryPool[VROM_OFFSET];
+  soundROM = &memoryPool[SOUNDROM_OFFSET];
+  sampleROM = &memoryPool[SAMPLEROM_OFFSET];
+  dsbROM = &memoryPool[DSBPROGROM_OFFSET];
+  mpegROM = &memoryPool[DSBMPEGROM_OFFSET];
+  backupRAM = &memoryPool[BACKUPRAM_OFFSET];
+  securityRAM = &memoryPool[SECURITYRAM_OFFSET];
+  driveROM = &memoryPool[DRIVEROM_OFFSET];
+  netRAM = &memoryPool[NETRAM_OFFSET];
+  netBuffer = &memoryPool[NETBUFFER_OFFSET];
+
   SetCROMBank(0xFF);
   
   // Initialize other devices (PowerPC, DSB, and security board initialized after ROMs loaded)
@@ -3141,10 +3164,6 @@ bool CModel3::Init(void)
     return FAIL;
   if (OKAY != SoundBoard.Init(soundROM,sampleROM))
     return FAIL;
-#ifdef NET_BOARD
-  if (OKAY != NetBoard.Init(netRAM, netBuffer))
-  return FAIL;
-#endif
 
   PCIBridge.AttachPCIBus(&PCIBus);
   PCIBus.AttachDevice(13,&GPU);
@@ -3202,10 +3221,8 @@ CModel3::CModel3(const Util::Config::Node &config)
   cromBank = NULL;
   backupRAM = NULL;
   securityRAM = NULL;
-#ifdef NET_BOARD
   netRAM = NULL;
   netBuffer = NULL;
-#endif
 
   DSB = NULL;
 
@@ -3294,10 +3311,8 @@ CModel3::~CModel3(void)
   cromBank = NULL;
   backupRAM = NULL;
   securityRAM = NULL;
-#ifdef NET_BOARD
   netRAM = NULL;
   netBuffer = NULL;
-#endif
 
   DebugLog("Destroyed Model 3\n");
 }

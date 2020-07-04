@@ -94,8 +94,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC;NET_BOARD</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader />
@@ -112,13 +112,13 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir "$(TargetDir)\Config"
-mkdir "$(TargetDir)\NVRAM"
-mkdir "$(TargetDir)\Saves"
-xcopy /D /Y "$(ProjectDir)\..\Docs\*" "$(TargetDir)"
-xcopy /D /Y "$(ProjectDir)\..\Config\*" "$(TargetDir)\Config"
-xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDir)"
-</Command>
+      <Command>if not exist "$(TargetDir)Config" mkdir "$(TargetDir)Config"
+if not exist "$(TargetDir)NVRAM" mkdir "$(TargetDir)NVRAM"
+if not exist "$(TargetDir)Saves" mkdir "$(TargetDir)Saves"
+xcopy /D /Y "$(ProjectDir)..\Docs\*" "$(TargetDir)"
+xcopy /D /Y "$(ProjectDir)..\Config\*" "$(TargetDir)Config"
+xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL2.dll" "$(TargetDir)"
+xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -127,13 +127,13 @@ xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDi
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC;NET_BOARD</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -145,21 +145,21 @@ xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDi
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir "$(TargetDir)\Config"
-mkdir "$(TargetDir)\NVRAM"
-mkdir "$(TargetDir)\Saves"
-xcopy /D /Y "$(ProjectDir)\..\Docs\*" "$(TargetDir)"
-xcopy /D /Y "$(ProjectDir)\..\Config\*" "$(TargetDir)\Config"
-xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDir)"
-</Command>
+      <Command>if not exist "$(TargetDir)Config" mkdir "$(TargetDir)Config"
+if not exist "$(TargetDir)NVRAM" mkdir "$(TargetDir)NVRAM"
+if not exist "$(TargetDir)Saves" mkdir "$(TargetDir)Saves"
+xcopy /D /Y "$(ProjectDir)..\Docs\*" "$(TargetDir)"
+xcopy /D /Y "$(ProjectDir)..\Config\*" "$(TargetDir)Config"
+xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL2.dll" "$(TargetDir)"
+xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC;NET_BOARD</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader />
@@ -178,14 +178,13 @@ xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDi
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir "$(TargetDir)\Config"
-mkdir "$(TargetDir)\NVRAM"
-mkdir "$(TargetDir)\Saves"
-xcopy /D /Y "$(ProjectDir)\..\Docs\*" "$(TargetDir)"
-xcopy /D /Y "$(ProjectDir)\..\Config\*" "$(TargetDir)\Config"
-xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDir)"
-
-</Command>
+      <Command>if not exist "$(TargetDir)Config" mkdir "$(TargetDir)Config"
+if not exist "$(TargetDir)NVRAM" mkdir "$(TargetDir)NVRAM"
+if not exist "$(TargetDir)Saves" mkdir "$(TargetDir)Saves"
+xcopy /D /Y "$(ProjectDir)..\Docs\*" "$(TargetDir)"
+xcopy /D /Y "$(ProjectDir)..\Config\*" "$(TargetDir)Config"
+xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL2.dll" "$(TargetDir)"
+xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -195,8 +194,8 @@ xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDi
     <ClCompile>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC;NET_BOARD</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -216,12 +215,13 @@ xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDi
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir "$(TargetDir)\Config"
-mkdir "$(TargetDir)\NVRAM"
-mkdir "$(TargetDir)\Saves"
-xcopy /D /Y "$(ProjectDir)\..\Docs\*" "$(TargetDir)"
-xcopy /D /Y "$(ProjectDir)\..\Config\*" "$(TargetDir)\Config"
-xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDir)"
+      <Command>if not exist "$(TargetDir)Config" mkdir "$(TargetDir)Config"
+if not exist "$(TargetDir)NVRAM" mkdir "$(TargetDir)NVRAM"
+if not exist "$(TargetDir)Saves" mkdir "$(TargetDir)Saves"
+xcopy /D /Y "$(ProjectDir)..\Docs\*" "$(TargetDir)"
+xcopy /D /Y "$(ProjectDir)..\Config\*" "$(TargetDir)Config"
+xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL2.dll" "$(TargetDir)"
+xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -234,6 +234,9 @@ xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDi
       <Project>{da956fd3-e142-46f2-9dd5-c78bebb56b7a}</Project>
       <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="SDLnet\SDL_net.vcxproj">
+      <Project>{8ab3504f-5e58-4910-afe8-7a1e595ac3f4}</Project>
     </ProjectReference>
     <ProjectReference Include="SDL\SDL.vcxproj">
       <Project>{81ce8daf-ebb2-4761-8e45-b71abcca8c68}</Project>
@@ -352,6 +355,8 @@ xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDi
     <ClCompile Include="..\Src\Model3\SoundBoard.cpp" />
     <ClCompile Include="..\Src\Model3\TileGen.cpp" />
     <ClCompile Include="..\Src\Network\NetBoard.cpp" />
+    <ClCompile Include="..\Src\Network\TCPReceive.cpp" />
+    <ClCompile Include="..\Src\Network\TCPSend.cpp" />
     <ClCompile Include="..\Src\Network\UDPReceive.cpp" />
     <ClCompile Include="..\Src\Network\UDPSend.cpp" />
     <ClCompile Include="..\Src\Network\WinSockWrap.cpp" />
@@ -525,6 +530,8 @@ xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL.dll" "$(TargetDi
     <ClInclude Include="..\Src\Model3\SoundBoard.h" />
     <ClInclude Include="..\Src\Model3\TileGen.h" />
     <ClInclude Include="..\Src\Network\NetBoard.h" />
+    <ClInclude Include="..\Src\Network\TCPReceive.h" />
+    <ClInclude Include="..\Src\Network\TCPSend.h" />
     <ClInclude Include="..\Src\Network\UDPPacket.h" />
     <ClInclude Include="..\Src\Network\UDPReceive.h" />
     <ClInclude Include="..\Src\Network\UDPSend.h" />

@@ -4,11 +4,9 @@
 #include "Types.h"
 #include "CPU/Bus.h"
 #include "OSD/Thread.h"
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <thread>
-#include "UDPSend.h"
-#include "UDPReceive.h"
+#include <memory>
+#include "TCPSend.h"
+#include "TCPReceive.h"
 
 //#define NET_BUF_SIZE 32800 // 16384 not enough
 
@@ -36,7 +34,7 @@ public:
 	bool CodeReady;
 
 	bool Init(UINT8 *netRAMPtr, UINT8 *netBufferPtr);
-	
+
 	void GetGame(Game);
 
 	CNetBoard(const Util::Config::Node &config);
@@ -72,8 +70,8 @@ private:
 	UINT16 port_out = 0;
 	std::string addr_out = "";
 
-	SMUDP::UDPSend udpSend;
-	SMUDP::UDPReceive udpReceive;
+	std::unique_ptr<TCPSend> nets;
+	std::unique_ptr<TCPReceive> netr;
 
 	//game info
 	Game Gameinfo;
