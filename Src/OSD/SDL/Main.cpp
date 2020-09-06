@@ -1,7 +1,7 @@
 /**
  ** Supermodel
  ** A Sega Model 3 Arcade Emulator.
- ** Copyright 2011-2019 Bart Trzynadlowski, Nik Henson, Ian Curtis,
+ ** Copyright 2011-2020 Bart Trzynadlowski, Nik Henson, Ian Curtis,
  **                     Harry Tuttle, and Spindizzi
  **
  ** This file is part of Supermodel.
@@ -56,12 +56,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
-#include "Pkgs/glew.h"
-#ifdef SUPERMODEL_OSX
-#include <SDL/SDL.h>
-#else
-#include <SDL.h>
-#endif
+#include <GL/glew.h>
 
 #include "Supermodel.h"
 #include "Util/Format.h"
@@ -74,12 +69,9 @@
 #include "WinOutputs.h"
 #include "NetOutputs.h"
 #endif
+#include "SDLIncludes.h"
 
 #include <iostream>
-
-// Log file names
-#define DEBUG_LOG_FILE  "debug.log"
-#define ERROR_LOG_FILE  "error.log"
 
 
 /******************************************************************************
@@ -826,9 +818,9 @@ static void SuperSleep(UINT32 time)
 ******************************************************************************/
 
 #ifdef SUPERMODEL_DEBUGGER
-int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *Inputs, COutputs *Outputs, Debugger::CDebugger *Debugger)
+int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *Inputs, COutputs *Outputs, std::shared_ptr<Debugger::CDebugger> Debugger)
 {
-  CLogger *oldLogger = 0;
+  std::shared_ptr<CLogger> oldLogger;
 #else
 int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *Inputs, COutputs *Outputs)
 {         
@@ -1377,6 +1369,8 @@ static Util::Config::Node DefaultConfig()
   config.Set("EmulateDSB", true);
   config.Set("SoundVolume", "100");
   config.Set("MusicVolume", "100");
+  // Other sound options
+  config.Set("LegacySoundDSP", false); // New config option for games that do not play correctly with MAME's SCSP sound core.
   // CDriveBoard
 #ifdef SUPERMODEL_WIN32
   config.Set("ForceFeedback", false);
@@ -1423,7 +1417,7 @@ static Util::Config::Node DefaultConfig()
 static void Title(void)
 {
   puts("Supermodel: A Sega Model 3 Arcade Emulator (Version " SUPERMODEL_VERSION ")");
-  puts("Copyright 2011-2019 by Bart Trzynadlowski, Nik Henson, Ian Curtis,");
+  puts("Copyright 2011-2020 by Bart Trzynadlowski, Nik Henson, Ian Curtis,");
   puts("                       Harry Tuttle, and Spindizzi\n");
 }
 
@@ -1437,6 +1431,8 @@ static void Help(void)
   puts("  -?, -h, -help, --help   Print this help text");
   puts("  -print-games            List supported games and quit");
   printf("  -game-xml-file=<file>   ROM set definition file [Default: %s]\n", s_gameXMLFilePath);
+  puts("  -log-output=<outputs>   Log output destination(s) [Default: Supermodel.log]");
+  puts("  -log-level=<level>      Logging threshold [Default: info]");
   puts("");
   puts("Core Options:");
   printf("  -ppc-frequency=<freq>   PowerPC frequency in MHz [Default: %d]\n", defaultConfig["PowerPCFrequency"].ValueAs<unsigned>());
@@ -1478,11 +1474,13 @@ static void Help(void)
   puts("  -flip-stereo            Swap left and right audio channels");
   puts("  -no-sound               Disable sound board emulation (sound effects)");
   puts("  -no-dsb                 Disable Digital Sound Board (MPEG music)");
+  puts("  -new-scsp               New SCSP engine based on MAME [Default]");
+  puts("  -legacy-scsp            Legacy SCSP engine by ElSemi");
   puts("");
 #ifdef NET_BOARD
   puts("Net Options:");
-  puts("  -no-net                 Disable net board emulation (default)");
-  puts("  -net                    Enable net board emulation (not working ATM - need -no-threads)");
+  puts("  -no-net                 Disable net board emulation [Default]");
+  puts("  -net                    Enable net board emulation (requires -no-threads)");
   puts("");
 #endif
   puts("Input Options:");
@@ -1508,6 +1506,7 @@ struct ParsedCommandLine
 {
   Util::Config::Node config = Util::Config::Node("CommandLine");
   std::vector<std::string> rom_files;
+  bool error = false;
   bool print_help = false;
   bool print_games = false;
   bool print_gl_info = false;
@@ -1518,6 +1517,14 @@ struct ParsedCommandLine
 #ifdef DEBUG
   std::string gfx_state;
 #endif
+
+  ParsedCommandLine()
+  {
+    // Logging is special: it is only parsed from the command line and
+    // therefore, defaults are needed early
+    config.Set("LogOutput", "Supermodel.log");
+    config.Set("LogLevel", "info");
+  }
 };
 
 static ParsedCommandLine ParseCommandLine(int argc, char **argv)
@@ -1540,7 +1547,9 @@ static ParsedCommandLine ParseCommandLine(int argc, char **argv)
     { "-balance",               "Balance"                 },
     { "-soundfreq",             "SoundFreq"               },
     { "-input-system",          "InputSystem"             },
-    { "-outputs",               "Outputs"                 }
+    { "-outputs",               "Outputs"                 },
+    { "-log-output",            "LogOutput"               },
+    { "-log-level",             "LogLevel"                }
   };
   const std::map<std::string, std::pair<std::string, bool>> bool_options
   { // -option
@@ -1571,6 +1580,8 @@ static ParsedCommandLine ParseCommandLine(int argc, char **argv)
     { "-no-sound",            { "EmulateSound",     false } },
     { "-dsb",                 { "EmulateDSB",       true } },
     { "-no-dsb",              { "EmulateDSB",       false } },
+    { "-legacy-scsp",         { "LegacySoundDSP",   true } },
+    { "-new-scsp",            { "LegacySoundDSP",   false } },
 #ifdef NET_BOARD
   { "-net",                   { "EmulateNet",       true } },
   { "-no-net",                { "EmulateNet",       false } },
@@ -1595,6 +1606,7 @@ static ParsedCommandLine ParseCommandLine(int argc, char **argv)
         if (value.length() == 0)
         {
           ErrorLog("Argument to '%s' cannot be blank.", option.c_str());
+          cmd_line.error = true;
           continue;
         }
         auto it = valued_options.find(option);
@@ -1618,6 +1630,7 @@ static ParsedCommandLine ParseCommandLine(int argc, char **argv)
         else if (valued_options.find(arg) != valued_options.end())
         {
           ErrorLog("'%s' requires an argument.", argv[i]);
+          cmd_line.error = true;
           continue;
         }
       }
@@ -1630,7 +1643,10 @@ static ParsedCommandLine ParseCommandLine(int argc, char **argv)
       {
         std::vector<std::string> parts = Util::Format(arg).Split('=');
         if (parts.size() != 2)
+        {
           ErrorLog("'-res' requires both a width and height (e.g., '-res=496,384').");
+          cmd_line.error = true;
+        }
         else
         {
           unsigned  x, y;
@@ -1642,7 +1658,10 @@ static ParsedCommandLine ParseCommandLine(int argc, char **argv)
             cmd_line.config.Set("YResolution", yres);
           }
           else
+          {
             ErrorLog("'-res' requires both a width and height (e.g., '-res=496,384').");
+            cmd_line.error = true;
+          }
         }
       }
       else if (arg == "-print-gl-info")
@@ -1662,13 +1681,19 @@ static ParsedCommandLine ParseCommandLine(int argc, char **argv)
       {
         std::vector<std::string> parts = Util::Format(arg).Split('=');
         if (parts.size() != 2)
+        {
           ErrorLog("'-gfx-state' requires a file name.");
+          cmd_line.error = true;
+        }
         else
           cmd_line.gfx_state = parts[1];
       }
 #endif
       else
+      {
         ErrorLog("Ignoring unrecognized option: %s", argv[i]);
+        cmd_line.error = true;
+      }
     }
     else
       cmd_line.rom_files.emplace_back(arg);
@@ -1684,10 +1709,6 @@ static ParsedCommandLine ParseCommandLine(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-#ifdef SUPERMODEL_DEBUGGER
-  bool      cmdEnterDebugger = false;
-#endif // SUPERMODEL_DEBUGGER
-
   Title();
   if (argc <= 1)
   {
@@ -1695,17 +1716,30 @@ int main(int argc, char **argv)
     return 0;
   }
 
-  // Create default logger
-  CFileLogger Logger(DEBUG_LOG_FILE, ERROR_LOG_FILE);
-  Logger.ClearLogs();
-  SetLogger(&Logger);
+  // Before command line is parsed, console logging only
+  SetLogger(std::make_shared<CConsoleErrorLogger>());
+
+  // Load config and parse command line
+  auto cmd_line = ParseCommandLine(argc, argv);
+  if (cmd_line.error)
+  {
+    return 1;
+  }
+
+  // Create logger as specified by command line
+  auto logger = CreateLogger(cmd_line.config);
+  if (!logger)
+  {
+    ErrorLog("Unable to initialize logging system.");
+    return 1;
+  }
+  SetLogger(logger);
+  InfoLog("Supermodel Version " SUPERMODEL_VERSION);
   InfoLog("Started as:");
   for (int i = 0; i < argc; i++)
     InfoLog("  argv[%d] = %s", i, argv[i]);
-  InfoLog("");
   
-  // Load config and parse command line
-  auto cmd_line = ParseCommandLine(argc, argv);
+  // Finish processing command line
   if (cmd_line.print_help)
   {
     Help();
@@ -1757,7 +1791,6 @@ int main(int argc, char **argv)
     Util::Config::MergeINISections(&s_runtime_config, config4, cmd_line.config);  // apply command line overrides once more
   }
   LogConfig(s_runtime_config);
-  std::string selectedInputSystem = s_runtime_config["InputSystem"].ValueAs<std::string>();
 
   // Initialize SDL (individual subsystems get initialized later)
   if (SDL_Init(0) != 0)
@@ -1773,8 +1806,9 @@ int main(int argc, char **argv)
   CInputs *Inputs = nullptr;
   COutputs *Outputs = nullptr;
 #ifdef SUPERMODEL_DEBUGGER
-  Debugger::CSupermodelDebugger *Debugger = NULL;
+  std::shared_ptr<Debugger::CSupermodelDebugger> Debugger;
 #endif // SUPERMODEL_DEBUGGER
+  std::string selectedInputSystem = s_runtime_config["InputSystem"].ValueAs<std::string>();
   
   // Create a window
   xRes = 496;
@@ -1875,15 +1909,13 @@ int main(int argc, char **argv)
   // Create Supermodel debugger unless debugging is disabled
   if (!cmd_line.disable_debugger)
   {
-    Debugger = new Debugger::CSupermodelDebugger(dynamic_cast<CModel3 *>(Model3), Inputs, &Logger);
+    Debugger = std::make_shared<Debugger::CSupermodelDebugger>(dynamic_cast<CModel3 *>(Model3), Inputs, logger);
     // If -enter-debugger option was set force debugger to break straightaway
-    if (cmdEnterDebugger)
+    if (cmd_line.enter_debugger)
       Debugger->ForceBreak(true);
   }
   // Fire up Supermodel with debugger
   exitCode = Supermodel(game, &rom_set, Model3, Inputs, Outputs, Debugger);
-  if (Debugger != NULL)
-    delete Debugger;
 #else
   // Fire up Supermodel
   exitCode = Supermodel(game, &rom_set, Model3, Inputs, Outputs);

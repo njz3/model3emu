@@ -1,7 +1,8 @@
 ##
 ## Supermodel
 ## A Sega Model 3 Arcade Emulator.
-## Copyright 2011-2017 Bart Trzynadlowski, Nik Henson, Ian Curtis
+## Copyright 2011-2020 Bart Trzynadlowski, Nik Henson, Ian Curtis,
+##                     Harry Tuttle, and Spindizzi
 ##
 ## This file is part of Supermodel.
 ##
@@ -40,6 +41,11 @@ DELETE = rm -d -r -f
 ###############################################################################
 
 #
+# Must be included first
+#
+include Makefiles/Options.inc
+
+#
 # Toolchain
 #
 CC = gcc
@@ -65,7 +71,7 @@ PLATFORM_LDFLAGS = $(SDL2_LIBS) -lGL -lGLU -lz -lm -lstdc++ -lpthread -lSDL2_net
 # Core Makefile
 ###############################################################################
 
-include Makefiles/Makefile.inc
+include Makefiles/Rules.inc
 
 clean:
 	$(SILENT)echo Cleaning up \"$(BIN_DIR)\" and \"$(OBJ_DIR)\"...

@@ -275,7 +275,7 @@
  */
 
 #include <cstring>
-#include "Pkgs/glew.h"
+#include <GL/glew.h>
 #include "Supermodel.h"
 #include "Graphics/Shaders2D.h" // fragment and vertex shaders
 
