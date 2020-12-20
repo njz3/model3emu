@@ -372,7 +372,7 @@
         <file offset="0x400000" name="mpr-21033.24" crc32="0x253D3C70" />
         <file offset="0x800000" name="mpr-21032.23" crc32="0x3D3FF407" />
       </region>
-	  <!-- Spindizzi notes : apparently it uses the same rom from scud race-->
+      <!-- Spindizzi notes : apparently it uses the same rom from scud race-->
       <region name="driveboard_program" stride="1" chunk_size="1">
         <file offset="0" name="epr-19338a.bin" crc32="0xC9FAC464" />
       </region>
@@ -548,7 +548,7 @@
         <file offset="0x800000" name="mpr-22888.23" crc32="0x018FCF22" />
         <file offset="0xC00000" name="mpr-22890.25" crc32="0xB638BD7C" />
       </region>
-	  <!-- Spindizzi notes : apparently it uses the same rom from scud race-->
+      <!-- Spindizzi notes : apparently it uses the same rom from scud race-->
       <region name="driveboard_program" stride="1" chunk_size="1">
         <file offset="0" name="epr-19338a.bin" crc32="0xC9FAC464" />
       </region>
@@ -582,7 +582,7 @@
       <region name="crom" stride="8" chunk_size="2" byte_swap="true">
         <file offset="0" name="qq.ic20" crc32="0xB12FE61C" />
         <file offset="2" name="qq.ic19" crc32="0xA646C7E5" />
-        <file offset="4" name="qq.ic18" crc32="0x17B0BB2C" /> 
+        <file offset="4" name="qq.ic18" crc32="0x17B0BB2C" />
         <file offset="6" name="qq.ic17" crc32="0x420B5EB8" />
       </region>
       <!-- Hand written SEGA labels in this form:  TITLE: QQ  ROM NO: IC13  CHECK SUM: 6B84  9/12-'99 -->
@@ -2086,8 +2086,8 @@
       <patches>
         <!-- skip force feedback lever check -->
         <!-- <patch region="crom" bits="32" offset="0xf6e44" value="0x60000000" /> --> <!-- from MAME -->
-        <patch region="crom" bits="32" offset="0xf0e48" value="0x60000000" />
-        <patch region="crom" bits="32" offset="0x043dc" value="0x48000090" /> <!-- related to joystick feedback -->
+        <!--<patch region="crom" bits="32" offset="0xf0e48" value="0x60000000" /> --> <!-- no more needed if ffb lever rom loaded -->
+        <!--<patch region="crom" bits="32" offset="0x043dc" value="0x48000090" /> --> <!-- related to joystick feedback --> <!-- no more needed if ffb lever rom loaded -->
         <patch region="crom" bits="32" offset="0x029a0" value="0x60000000" /> <!-- skip force feedback setup? -->
         <patch region="crom" bits="32" offset="0x02a0c" value="0x60000000" />
         <!-- Additional patches from MAME for test menu -->
@@ -2153,11 +2153,11 @@
         <file offset="0xC00000" name="mpr-21378.24" crc32="0x1FCF715E" />
       </region>
       <!-- Force feedback controller prg -->
-      <!--
+      
       <region name="ffb_program" stride="1" chunk_size="1">
         <file offset="0" name="epr-21119.ic8" crc32="0x65082B14" />
       </region>
-      -->
+      
     </roms>
   </game>
 
@@ -2184,10 +2184,14 @@
         <!--<patch region="crom" bits="32" offset="0xf6dd0" value="0x60000000" /> --> <!-- from MAME -->
         <!-- Spindizzi notes : mimic patch from Bart's patch in swtrilgy to prevent game to be slow-->
         <!-- instead of patch we can make hack timing in code -->
-        <patch region="crom" bits="32" offset="0x043dc" value="0x48000090" />
+        <!--<patch region="crom" bits="32" offset="0x043dc" value="0x48000090" />--> <!-- no more needed if ffb lever rom loaded -->
         <patch region="crom" bits="32" offset="0x029a0" value="0x60000000" />
         <patch region="crom" bits="32" offset="0x02a0c" value="0x60000000" />
-        <patch region="crom" bits="32" offset="0xf0dd4" value="0x60000000" />
+        <!--<patch region="crom" bits="32" offset="0xf0dd4" value="0x60000000" />--> <!-- no more needed if ffb lever rom loaded -->
+        <!-- Additional patches from MAME for test menu -->
+        <patch region="crom" bits="32" offset="0xf76f8" value="0x60000000" /> <!-- unemulated JTAG stuff -->
+        <patch region="crom" bits="32" offset="0xf76fc" value="0x60000000" /> <!-- "" -->
+        <patch region="crom" bits="32" offset="0xf7700" value="0x60000000" /> <!-- "" -->
       </patches>
       <region name="crom" stride="8" chunk_size="2" byte_swap="true">
         <file offset="0" name="epr-21382.20" crc32="0x0B9C44A0" />

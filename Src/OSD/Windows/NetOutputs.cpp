@@ -44,6 +44,7 @@ bool CNetOutputs::Initialize()
         return false;
     }
 
+
     // Run tcp server thread
     if (CreateServerThread() != 0) {
         MessageBoxA(NULL, "Unable to start server thread for tcp outputs", NULL, NULL);
