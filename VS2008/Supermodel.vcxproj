@@ -94,7 +94,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;$(DXSDK_DIR)\Include;..\Src\Pkgs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;..\Libraries\lua-5.4.2\src;..\Src\Pkgs;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC;NET_BOARD</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -104,7 +104,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;WbemUuid.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Lua\x86\Debug\Lua.lib;opengl32.lib;glu32.lib;WbemUuid.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)\Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -115,8 +115,10 @@
       <Command>if not exist "$(TargetDir)Config" mkdir "$(TargetDir)Config"
 if not exist "$(TargetDir)NVRAM" mkdir "$(TargetDir)NVRAM"
 if not exist "$(TargetDir)Saves" mkdir "$(TargetDir)Saves"
+if not exist "$(TargetDir)Scripts" mkdir "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)..\Docs\*" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)..\Config\*" "$(TargetDir)Config"
+xcopy /D /Y "$(ProjectDir)..\Scripts\*" "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL2.dll" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
@@ -127,7 +129,7 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;$(DXSDK_DIR)\Include;..\Src\Pkgs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;..\Libraries\lua-5.4.2\src;..\Src\Pkgs;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC;NET_BOARD</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -137,7 +139,7 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;WbemUuid.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Lua\x64\Debug\Lua.lib;opengl32.lib;glu32.lib;WbemUuid.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -148,17 +150,20 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
       <Command>if not exist "$(TargetDir)Config" mkdir "$(TargetDir)Config"
 if not exist "$(TargetDir)NVRAM" mkdir "$(TargetDir)NVRAM"
 if not exist "$(TargetDir)Saves" mkdir "$(TargetDir)Saves"
+if not exist "$(TargetDir)Scripts" mkdir "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)..\Docs\*" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)..\Config\*" "$(TargetDir)Config"
+xcopy /D /Y "$(ProjectDir)..\Scripts\*" "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL2.dll" "$(TargetDir)"
-xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"</Command>
+xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;$(DXSDK_DIR)\Include;..\Src\Pkgs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;..\Libraries\lua-5.4.2\src;..\Src\Pkgs;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC;NET_BOARD</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -168,7 +173,7 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;WbemUuid.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Lua\x86\Release\Lua.lib;opengl32.lib;glu32.lib;WbemUuid.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)\Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -181,8 +186,10 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
       <Command>if not exist "$(TargetDir)Config" mkdir "$(TargetDir)Config"
 if not exist "$(TargetDir)NVRAM" mkdir "$(TargetDir)NVRAM"
 if not exist "$(TargetDir)Saves" mkdir "$(TargetDir)Saves"
+if not exist "$(TargetDir)Scripts" mkdir "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)..\Docs\*" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)..\Config\*" "$(TargetDir)Config"
+xcopy /D /Y "$(ProjectDir)..\Scripts\*" "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL2.dll" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
@@ -194,7 +201,7 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
     <ClCompile>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;$(DXSDK_DIR)\Include;..\Src\Pkgs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;..\Libraries\lua-5.4.2\src;..\Src\Pkgs;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC;NET_BOARD</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -205,7 +212,7 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;WbemUuid.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Lua\x64\Release\Lua.lib;opengl32.lib;glu32.lib;WbemUuid.lib;dinput8.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -218,14 +225,19 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
       <Command>if not exist "$(TargetDir)Config" mkdir "$(TargetDir)Config"
 if not exist "$(TargetDir)NVRAM" mkdir "$(TargetDir)NVRAM"
 if not exist "$(TargetDir)Saves" mkdir "$(TargetDir)Saves"
+if not exist "$(TargetDir)Scripts" mkdir "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)..\Docs\*" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)..\Config\*" "$(TargetDir)Config"
+xcopy /D /Y "$(ProjectDir)..\Scripts\*" "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL2.dll" "$(TargetDir)"
-xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"
-</Command>
+xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ProjectReference Include="Lua\Lua.vcxproj">
+      <Project>{a130bb58-99e4-4639-b75e-6bbc1de9989d}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
     <ProjectReference Include="Musashi68K\Musashi68K.vcxproj">
       <Project>{1248cf7c-b122-461c-9624-196aefae5046}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
@@ -389,6 +401,7 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
       </ExceptionHandling>
     </ClCompile>
     <ClCompile Include="..\Src\ROMSet.cpp" />
+    <ClCompile Include="..\Src\Scripting\LuaEngine.cpp" />
     <ClCompile Include="..\Src\Sound\MPEG\MpegAudio.cpp" />
     <ClCompile Include="..\Src\Sound\SCSP.cpp" />
     <ClCompile Include="..\Src\Sound\SCSPDSP.cpp" />
@@ -555,6 +568,8 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
     <ClInclude Include="..\Src\Pkgs\unzip.h" />
     <ClInclude Include="..\Src\Pkgs\wglew.h" />
     <ClInclude Include="..\Src\ROMSet.h" />
+    <ClInclude Include="..\Src\Scripting\IScripting.h" />
+    <ClInclude Include="..\Src\Scripting\LuaEngine.h" />
     <ClInclude Include="..\Src\Sound\MPEG\MpegAudio.h" />
     <ClInclude Include="..\Src\Sound\SCSP.h" />
     <ClInclude Include="..\Src\Sound\SCSPDSP.h" />

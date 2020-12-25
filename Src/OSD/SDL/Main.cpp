@@ -70,6 +70,7 @@
 #include "NetOutputs.h"
 #endif
 #include "SDLIncludes.h"
+#include "Scripting/LuaEngine.h"
 
 #include <iostream>
 #include "Util/BMPFile.h"
@@ -832,11 +833,11 @@ static void SuperSleep(UINT32 time)
 ******************************************************************************/
 
 #ifdef SUPERMODEL_DEBUGGER
-int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *Inputs, COutputs *Outputs, std::shared_ptr<Debugger::CDebugger> Debugger)
+int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *Inputs, COutputs *Outputs, IScripting* scripting, std::shared_ptr<Debugger::CDebugger> Debugger)
 {
   std::shared_ptr<CLogger> oldLogger;
 #else
-int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *Inputs, COutputs *Outputs)
+int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *Inputs, COutputs *Outputs, IScripting *scripting)
 {
 #endif // SUPERMODEL_DEBUGGER
   std::string initialState = s_runtime_config["InitStateFile"].ValueAs<std::string>();
@@ -904,6 +905,9 @@ int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *In
     goto QuitError;
   Model3->AttachRenderers(Render2D,Render3D);
 
+  // Attach the scripting engine (Lua)
+  Model3->AttachScripting(scripting);
+  
   // Reset emulator
   Model3->Reset();
 
@@ -1400,6 +1404,7 @@ static Util::Config::Node DefaultConfig()
   config.Set("FullScreen", false);
   config.Set("WideScreen", false);
   config.Set("Stretch", false);
+  config.Set("WideBackground", false);
   config.Set("VSync", true);
   config.Set("Throttle", true);
   config.Set("ShowFrameRate", false);
@@ -1473,6 +1478,8 @@ static void Help(void)
   puts("  -window                 Windowed mode [Default]");
   puts("  -fullscreen             Full screen mode");
   puts("  -wide-screen            Expand 3D field of view to screen width");
+  puts("  -wide-bg                When wide-screen mode is enabled, also expand the 2D");
+  puts("                          background layer to screen width");
   puts("  -stretch                Fit viewport to resolution, ignoring aspect ratio");
   puts("  -no-throttle            Disable 60 Hz frame rate lock");
   puts("  -vsync                  Lock to vertical refresh rate [Default]");
@@ -1588,6 +1595,8 @@ static ParsedCommandLine ParseCommandLine(int argc, char **argv)
     { "-wide-screen",         { "WideScreen",       true } },
     { "-stretch",             { "Stretch",          true } },
     { "-no-stretch",          { "Stretch",          false } },
+    { "-wide-bg",             { "WideBackground",   true } },
+    { "-no-wide-bg",          { "WideBackground",   false } },
     { "-no-multi-texture",    { "MultiTexture",     false } },
     { "-multi-texture",       { "MultiTexture",     true } },
     { "-throttle",            { "Throttle",         true } },
@@ -1928,6 +1937,9 @@ int main(int argc, char **argv)
     goto Exit;
   }
 
+  // Create a Lua scripting engine
+  IScripting* ScriptingEngine = (IScripting*)new LuaEngine();
+
 #ifdef SUPERMODEL_DEBUGGER
   // Create Supermodel debugger unless debugging is disabled
   if (!cmd_line.disable_debugger)
@@ -1938,10 +1950,10 @@ int main(int argc, char **argv)
       Debugger->ForceBreak(true);
   }
   // Fire up Supermodel with debugger
-  exitCode = Supermodel(game, &rom_set, Model3, Inputs, Outputs, Debugger);
+  exitCode = Supermodel(game, &rom_set, Model3, Inputs, Outputs, ScriptingEngine, Debugger);
 #else
   // Fire up Supermodel
-  exitCode = Supermodel(game, &rom_set, Model3, Inputs, Outputs);
+  exitCode = Supermodel(game, &rom_set, Model3, Inputs, Outputs, ScriptingEngine);
 #endif // SUPERMODEL_DEBUGGER
   delete Model3;
 

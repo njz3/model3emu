@@ -35,6 +35,7 @@ class CRender2D;
 class IRender3D;
 class CInputs;
 class COutputs;
+class IScripting;
 
 /*
  * IEmulator:
@@ -163,7 +164,7 @@ public:
   virtual void AttachInputs(CInputs *InputsPtr) = 0;
   
   /*
-   * AttachInputs(InputsPtr):
+   * AttachOutputs(InputsPtr):
    *
    * Attaches OSD-managed outputs (cabinet lamps, etc.)
    *
@@ -171,6 +172,16 @@ public:
    *    OutputsPtr  Pointer to the object containing output states.
    */
   virtual void AttachOutputs(COutputs *OutputsPtr) = 0;
+
+  /*
+   * AttachScripting(InputsPtr):
+   *
+   * Attaches scripting engine used to tweak emulator behavior while running
+   *
+   * Parameters:
+   *    ScriptingEngine  Pointer to the object containing scripting engine.
+   */
+  virtual void AttachScripting(IScripting* ScriptingEngine) = 0;
 
   /*
    * Init(void):

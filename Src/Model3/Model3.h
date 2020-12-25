@@ -32,6 +32,7 @@
 #include "Model3/JTAG.h"
 #include "Model3/Crypto.h"
 #include "Util/NewConfig.h"
+#include "Scripting/IScripting.h"
 
 /*
  * FrameTimings
@@ -80,7 +81,8 @@ public:
   const Game &GetGame(void) const;
   void AttachRenderers(CRender2D *Render2DPtr, IRender3D *Render3DPtr);
   void AttachInputs(CInputs *InputsPtr);  
-  void AttachOutputs(COutputs *OutputsPtr);
+  void AttachOutputs(COutputs* OutputsPtr);
+  void AttachScripting(IScripting* scriptEngine);
   bool Init(void);
 
   // IPCIDevice interface
@@ -308,7 +310,7 @@ private:
   CNetBoard   NetBoard;		  // Net board
   bool		m_runNetBoard;
 #endif
-
+  IScripting* ScriptEngine;   // Scripting engine
 };
 
 

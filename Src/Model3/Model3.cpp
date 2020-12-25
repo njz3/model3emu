@@ -197,6 +197,16 @@
  *  - Region menu can be accessed by entering test mode, holding start, and
  *    pressing: green, green, blue, yellow, red, yellow, blue 
  *   (VR4,4,2,3,1,3,2).
+ * 
+ * magtruck:
+ *    Found a way to unlock region in Magical truck
+ *    If Midi data port returns 0, magtruck is locked to japan region
+ *    if Midi data port returns 1, magtruck region can be changed to export, usa, australian
+ *    We decided to make a rom patch instead of introducing a specific config to allow the region to be set
+ *    Reminder : to change region in magtruck, use the region menu code
+ *               enter Service menu with Test, then Start P1, Start P1, Service, Start P1, Service, Test (default keys : 6 then 1 1 5 1 5 6)
+ *    note : rom patch is active by default, comment the patch in games.xml if you want Japan region
+ * 
  */
 
 #include <new>
@@ -940,12 +950,15 @@ UINT8 CModel3::Read8(UINT32 addr)
 
     // Sound Board
     case 0x08:
-      if ((addr & 0xF) == 4)  // MIDI control port
-
-        return 0x83;          // magtruck country check
-
-      else
+      switch (addr & 0xf)
+      {
+      case 0x0:         // MIDI data port
+        return 0x00;    // Something to do with region locked in magtruck (0=locked, 1=unlocked). /!\ no effect if rom patch is activated!
+      case 0x4:         // MIDI control port
+        return 0x83;    // magtruck country check
+      default:
         return 0;
+      }
       break;
 
     // System registers
@@ -2004,7 +2017,6 @@ void CModel3::ClearNVRAM(void)
 void CModel3::RunFrame(void)
 {
   UINT32 start = CThread::GetTicks();
-
   // See if currently running multi-threaded
   if (m_multiThreaded)
   {
@@ -2080,6 +2092,7 @@ void CModel3::RunFrame(void)
     }
 #endif
   }
+  ScriptEngine->EndFrame();
 
   timings.frameTicks = CThread::GetTicks() - start;
 
@@ -2171,6 +2184,9 @@ void CModel3::RunMainBoardFrame(void)
 	ppc_execute(dispCycles);
 
 	timings.ppcTicks = CThread::GetTicks() - start;
+
+    ScriptEngine->Frame();
+
 }
 
 void CModel3::SyncGPUs(void)
@@ -2186,6 +2202,7 @@ void CModel3::SyncGPUs(void)
 void CModel3::RenderFrame(void)
 {
   UINT32 start = CThread::GetTicks();
+  ScriptEngine->Frame();
 
   // Call OSD video callbacks
   if (BeginFrameVideo() && gpusReady)
@@ -2202,6 +2219,8 @@ void CModel3::RenderFrame(void)
   }
 
   EndFrameVideo();
+
+  ScriptEngine->PostDraw();
 
   timings.renderTicks = CThread::GetTicks() - start;
 }
@@ -2861,6 +2880,7 @@ void CModel3::Reset(void)
     DriveBoard.Reset();
 
   m_cryptoDevice.Reset();
+  ScriptEngine->Reset();
 
   gpusReady = false;
 
@@ -3103,16 +3123,28 @@ void CModel3::AttachInputs(CInputs *InputsPtr)
   DebugLog("Model 3 attached inputs\n");
 }
 
-void CModel3::AttachOutputs(COutputs *OutputsPtr)
+void CModel3::AttachOutputs(COutputs* OutputsPtr)
 {
-  Outputs = OutputsPtr;
-  Outputs->SetGame(m_game);
-  Outputs->Attached();
+    Outputs = OutputsPtr;
+    Outputs->SetGame(m_game);
+    Outputs->Attached();
 
-  if (DriveBoard.IsAttached())
-    DriveBoard.AttachOutputs(Outputs);
+    if (DriveBoard.IsAttached())
+        DriveBoard.AttachOutputs(Outputs);
 
-  DebugLog("Model 3 attached outputs\n");
+    DebugLog("Model 3 attached outputs\n");
+}
+
+void CModel3::AttachScripting(IScripting* scriptEngine)
+{
+    ScriptEngine = scriptEngine;
+    // Initialize script engine
+    ScriptEngine->Initialize(this);
+    // Load script
+    ScriptEngine->LoadScript(this->m_game.name + ".lua");
+    DebugLog("Model 3 scripting engine initiliazed and script loaded\n");
+    // Initialize script internals
+    ScriptEngine->Init();
 }
 
 const static int RAM_SIZE			= 0x800000;		//8MB
@@ -3277,6 +3309,8 @@ CModel3::CModel3(const Util::Config::Node &config)
   notifyLock = NULL;
   notifySync = NULL;
 
+  ScriptEngine = NULL;
+
   DebugLog("Built Model 3\n");
 }
 
@@ -3309,7 +3343,9 @@ CModel3::~CModel3(void)
   //Dump("bankedCrom", &crom[0x800000], 0x7000000, true, false);
   //Dump("soundROM", soundROM, 0x80000, false, true);
   //Dump("sampleROM", sampleROM, 0x800000, false, true); 
-  
+
+  ScriptEngine->End();
+
   // Stop all threads
   StopThreads();
   
@@ -3340,6 +3376,7 @@ CModel3::~CModel3(void)
   securityRAM = NULL;
   netRAM = NULL;
   netBuffer = NULL;
+  ScriptEngine = NULL;
 
   DebugLog("Destroyed Model 3\n");
 }

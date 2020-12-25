@@ -3,3 +3,4 @@ Source code for Third-party libraries needs to be placed in here.
 zlib-1.2.11 (use zlib1211.zip)
 SDL2-2.0.12 (SDL2-2.0.12.zip)
 SDL2_net-2.0.1 (SDL2_net-2.0.1.zip)
+lua-5.4.2 (lua-5.4.2.tar.gz)

@@ -107,6 +107,8 @@ PLATFORM_SRC_FILES = \
 	Src/OSD/Windows/WinOutputs.cpp
 	Src/OSD/Windows/NetOutputs.cpp
 
+.PHONY: clean
+
 include Makefiles/Rules.inc
 
 clean:
