@@ -15,7 +15,7 @@ function Reset()
 end
 
 function Frame()
-	printMessage("Frame");
+	-- printMessage("Frame");
 	local gameState = PPC_ReadByte(0x5010A4)
 
 	if   gameState==0x16	-- Ingame
@@ -34,11 +34,11 @@ function Frame()
 end
 
 function PostDraw()
-	printMessage("PostDraw");
+	-- printMessage("PostDraw");
 end
 
 function EndFrame()
-	printMessage("EndFrame");
+	-- printMessage("EndFrame");
 end
 
 function End()
