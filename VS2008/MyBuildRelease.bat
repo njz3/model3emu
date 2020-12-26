@@ -1,10 +1,11 @@
-echo off
+echo on
 
 SET BuildMode=Release
 REM Set VERSION to last git annoted tag
 FOR /F %%i IN ('git describe') DO set TAG=%%i
 FOR /F %%i IN ('git rev-parse --short HEAD') DO set HASH=%%i
-SET VERSION=%TAG%-%HASH%
+REM SET VERSION=%TAG%-%HASH%
+SET VERSION=%TAG%-x64
 
 ECHO %VERSION%
 
@@ -14,7 +15,8 @@ SET VS=2019\Community
 SET BUILDER=%ProgramFiles(x86)%\Microsoft Visual Studio\%VS%\MSBuild\Current\Bin\MSBuild.exe
 SET DEVENV=%ProgramFiles(x86)%\Microsoft Visual Studio\%VS%\Common7\IDE\devenv.com
 SET OUTPUTDIR=supermodel
-REM SET Target32=x86\%BuildMode%\
+SET Target32=Win32\%BuildMode%\
+SET Target64=x64\%BuildMode%\
 
 
 :build86
@@ -53,16 +55,18 @@ REM %current_drive%
 REM "%DEVENV%" vJoyIOFeederSetup.sln /build "Release"
 
 :archive
-DEL /F /Q "Win32\Release\Supermodel.iobj"
-DEL /F /Q "Win32\Release\Supermodel.ipdb"
-DEL /F /Q "x64\Release\Supermodel.iobj"
-DEL /F /Q "x64\Release\Supermodel.ipdb"
+DEL /F /Q "%Target32%\Supermodel.iobj"
+DEL /F /Q "%Target32%\Supermodel.ipdb"
+DEL /F /Q "%Target32%\Supermodel.log"
+DEL /F /Q "%Target64%\Supermodel.iobj"
+DEL /F /Q "%Target64%\Supermodel.ipdb"
+DEL /F /Q "%Target64%\Supermodel.log"
 
-REM SET current_path="%CD%"
-REM RMDIR /S /Q "%OUTPUTDIR%"
-REM MKDIR "%OUTPUTDIR%"
+SET current_path="%CD%"
+RMDIR /S /Q "%OUTPUTDIR%"
+MKDIR "%OUTPUTDIR%"
 
-REM XCOPY /E /I "%Target64%" "%OUTPUTDIR%"
+XCOPY /E /I "%Target64%" "%OUTPUTDIR%"
 REM XCOPY "tools\fedit.exe" "%OUTPUTDIR%"
 REM XCOPY "tools\vJoySetup 2.2.0 signed.exe" "%OUTPUTDIR%"
 REM XCOPY /E /I "gameassets" "%OUTPUTDIR%\gameassets"
@@ -71,12 +75,13 @@ REM XCOPY /Y /I README.md "%OUTPUTDIR%"
 REM XCOPY /Y /I FAQ.md "%OUTPUTDIR%"
 REM MOVE /Y FeederIOBoard.zip "%OUTPUTDIR%"
 
-REM CD "%OUTPUTDIR%"
-REM DEL /F /Q "..\%ARCHIVE_NAME%"
-REM "%ZIP%" a -tzip "..\%ARCHIVE_NAME%" .
-REM CD %current_path%
-REM set BUILD_STATUS=%ERRORLEVEL%
-REM if not %BUILD_STATUS%==0 goto fail
+CD "%OUTPUTDIR%"
+DEL /F /Q "..\%ARCHIVE_NAME%"
+"%ZIP%" a -tzip "..\%ARCHIVE_NAME%" .
+CD %current_path%
+set BUILD_STATUS=%ERRORLEVEL%
+if not %BUILD_STATUS%==0 goto fail
+
 
 :fail
 exit /b 1
