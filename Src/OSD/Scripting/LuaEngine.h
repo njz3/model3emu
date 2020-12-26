@@ -105,7 +105,10 @@ public:
     // IScripting API
     void Initialize(IEmulator* emulator) override;
     void LoadScript(string filename) override;
-    
+    void SetGlobalString(string varname, string value) override;
+    void SetGlobalDouble(string varname, double value) override;
+    void SetGlobalInteger(string varname, long long value) override;
+
     // Script hooks
     void Init() override;
     void Reset() override;
@@ -116,7 +119,8 @@ public:
 
 
     // Special methods exported into Lua
-    static int printMessage(lua_State* lua);
+    static int print(lua_State* lua);
+    static int println(lua_State* lua);
 
     static int PPC_Read8(lua_State* lua);
     static int PPC_Read16(lua_State* lua);

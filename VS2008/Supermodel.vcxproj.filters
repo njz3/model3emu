@@ -138,7 +138,7 @@
     <Filter Include="Source Files\Network">
       <UniqueIdentifier>{284c6ebd-9a90-4283-9ee6-ea097974c8f4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Scripting">
+    <Filter Include="Source Files\OSD\Scripting">
       <UniqueIdentifier>{9b3446a1-6850-4ec3-bee4-c63040facba4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -452,8 +452,8 @@
     <ClCompile Include="..\Src\OSD\Windows\NetOutputs.cpp">
       <Filter>Source Files\OSD\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="..\Src\Scripting\LuaEngine.cpp">
-      <Filter>Source Files\Scripting</Filter>
+    <ClCompile Include="..\Src\OSD\Scripting\LuaEngine.cpp">
+      <Filter>Source Files\OSD\Scripting</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -832,11 +832,11 @@
     <ClInclude Include="..\Src\OSD\Windows\NetOutputs.h">
       <Filter>Header Files\OSD\Windows</Filter>
     </ClInclude>
-    <ClInclude Include="..\Src\Scripting\LuaEngine.h">
-      <Filter>Source Files\Scripting</Filter>
+    <ClInclude Include="..\Src\OSD\Scripting\IScripting.h">
+      <Filter>Source Files\OSD\Scripting</Filter>
     </ClInclude>
-    <ClInclude Include="..\Src\Scripting\IScripting.h">
-      <Filter>Source Files\Scripting</Filter>
+    <ClInclude Include="..\Src\OSD\Scripting\LuaEngine.h">
+      <Filter>Source Files\OSD\Scripting</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

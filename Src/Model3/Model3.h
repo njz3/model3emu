@@ -51,6 +51,7 @@ struct FrameTimings
   UINT32 netTicks;
 #endif
   UINT32 frameTicks;
+  UINT64 frameId;
 };
 
 /*
@@ -66,6 +67,9 @@ struct FrameTimings
  */
 class CModel3: public IEmulator, public IBus, public IPCIDevice
 {
+    /*friend class Iscripting;
+    friend class LuaScripting;
+    */
 public:
   // IEmulator interface
   bool PauseThreads(void);
@@ -84,6 +88,8 @@ public:
   void AttachOutputs(COutputs* OutputsPtr);
   void AttachScripting(IScripting* scriptEngine);
   bool Init(void);
+  // For Scripting tweaks
+  Util::Config::Node& GetConfig() { return this->m_config; }
 
   // IPCIDevice interface
   UINT32 ReadPCIConfigSpace(unsigned device, unsigned reg, unsigned bits, unsigned width);
@@ -98,7 +104,8 @@ public:
   void Write16(UINT32 addr, UINT16 data);
   void Write32(UINT32 addr, UINT32 data);
   void Write64(UINT32 addr, UINT64 data);
-    
+  
+  
   /*
    * LoadGame(game, rom_set):
    *
@@ -173,7 +180,7 @@ public:
    *    config  Run-time configuration. The reference should be held because
    *            this changes at run-time.
    */
-  CModel3(const Util::Config::Node &config);
+  CModel3(Util::Config::Node &config);
   ~CModel3(void);
 
   /*
@@ -217,7 +224,8 @@ private:
   int     RunDriveBoardThread(void);                  // Runs drive board thread (sync'd in step with render thread)
 
   // Runtime configuration
-  const Util::Config::Node &m_config;
+  Util::Config::Node &m_config;
+
   bool m_multiThreaded;
   bool m_gpuMultiThreaded;
 
@@ -251,6 +259,7 @@ private:
   UINT8   *driveROM;    // 32 KB drive board ROM (Z80 program) (optional)
   UINT8   *netRAM;		// 128KB RAM
   UINT8	  *netBuffer;	// 128KB buffer
+  UINT8   OutputRegister[2];   // Input/output register for driveboard and lamps
 
   // Banked CROM
   UINT8     *cromBank;    // currently mapped in CROM bank

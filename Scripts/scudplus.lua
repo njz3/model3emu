@@ -1,9 +1,13 @@
---Some sample code follows to show how to draw strings and setup options/cheats
---
+--Some sample code follows to show how to print to console and setup options/cheats
+-- Global Variables:
+--  Game : string, name of the current gameNetwork.init()
+--  FrameId : frame id, or # of the frame
+--  Ticks : system time in ms
+
 
 function Init()
-    printMessage("Loading " .. Game);
-	printMessage("Init");
+	println("Init -- This is an example script that only prints driveboard and lamps registers")
+    println("Loading " .. Game)
 	
 	local val8bits = PPC_Read8(0x5010A4)
 	local val16bits = PPC_Read16(0x5010A4)
@@ -11,13 +15,25 @@ function Init()
 end
 
 function Reset()
-	printMessage("Reset");
+	println("Reset")
 end
 
 function Frame()
-	-- printMessage("Frame");
-	local gameState = PPC_ReadByte(0x5010A4)
-
+	print("Frame=");
+	print(FrameId);
+	print(", ticks=");
+	print(Ticks);
+	print("\n");
+	
+	local driveboard = PPC_Read8(0xfe040010)
+	local lamps = PPC_Read8(0xfe040014)
+	print("Drv=0x" .. string.format("%X", driveboard) .. " Lamps=0x")
+    println(string.format("%X", lamps))
+    
+    local gameState = 0x16
+	-- local gameState = PPC_Read8(0x5010A4)
+    -- println(gameState)
+    
 	if   gameState==0x16	-- Ingame
 	  or gameState==0x03	-- Attract ini
 	  or gameState==0x04	-- Attract Higscore ini
@@ -34,13 +50,13 @@ function Frame()
 end
 
 function PostDraw()
-	-- printMessage("PostDraw");
+	-- println("PostDraw")
 end
 
 function EndFrame()
-	-- printMessage("EndFrame");
+	-- println("EndFrame")
 end
 
 function End()
-	printMessage("End");
+	println("End")
 end

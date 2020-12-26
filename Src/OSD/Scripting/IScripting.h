@@ -52,6 +52,9 @@ class IScripting
 public:
     virtual void Initialize(IEmulator* emulator) = 0;
     virtual void LoadScript(string filename) = 0;
+    virtual void SetGlobalString(string varname, string value) = 0;
+    virtual void SetGlobalDouble(string varname, double value) = 0;
+    virtual void SetGlobalInteger(string varname, long long value) = 0;
 
     // Script hooks
     virtual void Init() = 0;

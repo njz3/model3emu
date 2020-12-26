@@ -459,6 +459,11 @@ UINT8 CModel3::ReadInputs(unsigned reg)
       }
     }
     return data;
+  
+  case 0x10: // Drive board
+      return OutputRegister[0];
+  case 0x14: // Lamps
+      return OutputRegister[1];
 
   case 0x0C:  // game-specific inputs
 
@@ -640,6 +645,7 @@ void CModel3::WriteInputs(unsigned reg, UINT8 data)
       DriveBoard.Write(data);
     if (NULL != Outputs) // TODO - check gameInputs
       Outputs->SetValue(OutputRawDrive, data);
+    OutputRegister[0] = data;
     break;
 
   case 0x14:  // Lamp outputs (Daytona/Scud Race/Sega Rally/Le Mans 24)
@@ -653,6 +659,7 @@ void CModel3::WriteInputs(unsigned reg, UINT8 data)
       Outputs->SetValue(OutputLampLeader, !!(data&0x80));
       Outputs->SetValue(OutputRawLamps, data);
     }
+    OutputRegister[1] = data;
     break;
 
   case 0x24:  // Serial FIFO 1
@@ -1454,6 +1461,7 @@ void CModel3::Write8(UINT32 addr, UINT8 data)
       //printf("CMODEL3 : unknown W8 mirror : %x\n", addr >> 16);
       break;
     }
+    OutputRegister[(addr>>16)&0xFF] = data;
 
     DebugLog("PC=%08X\twrite8 : %08X=%02X\n", ppc_get_pc(), addr, data);    
     break;
@@ -2095,7 +2103,8 @@ void CModel3::RunFrame(void)
   ScriptEngine->EndFrame();
 
   timings.frameTicks = CThread::GetTicks() - start;
-
+  // Frame counter
+  timings.frameId++;
   return;
 
 ThreadError:
@@ -2184,9 +2193,6 @@ void CModel3::RunMainBoardFrame(void)
 	ppc_execute(dispCycles);
 
 	timings.ppcTicks = CThread::GetTicks() - start;
-
-    ScriptEngine->Frame();
-
 }
 
 void CModel3::SyncGPUs(void)
@@ -2895,7 +2901,8 @@ void CModel3::Reset(void)
   NetBoard.CodeReady = false;
 #endif
   timings.frameTicks = 0;
-  
+  timings.frameId = 0;
+
   DebugLog("Model 3 reset\n");
 }
 
@@ -3207,7 +3214,7 @@ bool CModel3::Init(void)
   driveROM = &memoryPool[DRIVEROM_OFFSET];
   netRAM = &memoryPool[NETRAM_OFFSET];
   netBuffer = &memoryPool[NETBUFFER_OFFSET];
-
+  memset(OutputRegister, 0, 2);
   SetCROMBank(0xFF);
   
   // Initialize other devices (PowerPC, DSB, and security board initialized after ROMs loaded)
@@ -3251,7 +3258,7 @@ CNetBoard *CModel3::GetNetBoard(void)
 }
 #endif
 
-CModel3::CModel3(const Util::Config::Node &config)
+CModel3::CModel3(Util::Config::Node &config)
   : m_config(config),
     m_multiThreaded(config["MultiThreaded"].ValueAs<bool>()),
     m_gpuMultiThreaded(config["GPUMultiThreaded"].ValueAs<bool>()),

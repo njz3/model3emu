@@ -6,14 +6,27 @@
 
 
 #pragma region Method registered in Lua 
-int LuaEngine::printMessage(lua_State* lua)
+int LuaEngine::print(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isstring(lua, 1));
-    // debug output
-    auto msg =  "Script: " + string(lua_tostring(lua, 1));
-    printf(msg.c_str());
-    DebugLog(msg.c_str());
+    if (lua_isstring(lua, 1)) {
+        // debug output
+        auto msg =  lua_tostring(lua, 1);
+        printf(msg);
+    } else if (lua_isnumber(lua, 1)==0) {
+        // debug output
+        auto val =  lua_tonumber(lua, 1);
+        printf("%f", val);
+    } else if (lua_isinteger(lua, 1)) {
+        // debug output
+        auto val =  lua_tointeger(lua, 1);
+        printf("%lld", val);
+    }
+    return 0;
+}
+int LuaEngine::println(lua_State* lua)
+{
+    print(lua); printf("\n");
     return 0;
 }
 
@@ -22,7 +35,9 @@ int LuaEngine::printMessage(lua_State* lua)
 int LuaEngine::PPC_Read8(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isinteger(lua, 1));
+    if (!lua_isinteger(lua, 1)) {
+        return luaL_error(lua, "argument to PPC_Read8() is not an integer");
+    }
     int addr = lua_tointeger(lua, 1);  /* get argument */
     auto value = me->_model3->Read8(addr);
 
@@ -32,8 +47,9 @@ int LuaEngine::PPC_Read8(lua_State* lua)
 int LuaEngine::PPC_Write8(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isinteger(lua, 1));
-    assert(lua_isinteger(lua, 2));
+    if (!lua_isinteger(lua, 1) || !lua_isinteger(lua, 2)) {
+        return luaL_error(lua, "argument to PPC_Write8() is not an integer");
+    }
     int addr = lua_tointeger(lua, 1);  /* get argument */
     UINT8 data = (UINT8)(lua_tointeger(lua, 2)&0xFF);  /* get argument */
     me->_model3->Write8(addr, data);
@@ -43,7 +59,9 @@ int LuaEngine::PPC_Write8(lua_State* lua)
 int LuaEngine::PPC_Read16(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isinteger(lua, 1));
+    if (!lua_isinteger(lua, 1)) {
+        return luaL_error(lua, "argument to PPC_Read16() is not an integer");
+    }
     int addr = lua_tointeger(lua, 1);  /* get argument */
     auto value = me->_model3->Read16(addr);
 
@@ -53,8 +71,9 @@ int LuaEngine::PPC_Read16(lua_State* lua)
 int LuaEngine::PPC_Write16(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isinteger(lua, 1));
-    assert(lua_isinteger(lua, 2));
+    if (!lua_isinteger(lua, 1) || !lua_isinteger(lua, 2)) {
+        return luaL_error(lua, "argument to PPC_Write16() is not an integer");
+    }
     int addr = lua_tointeger(lua, 1);  /* get argument */
     UINT16 data = (UINT16)(lua_tointeger(lua, 2)&0xFFFF);  /* get argument */
     me->_model3->Write16(addr, data);
@@ -65,7 +84,9 @@ int LuaEngine::PPC_Write16(lua_State* lua)
 int LuaEngine::PPC_Read32(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isinteger(lua, 1));
+    if (!lua_isinteger(lua, 1)) {
+        return luaL_error(lua, "argument to PPC_Read32() is not an integer");
+    }
     int addr = lua_tointeger(lua, 1);  /* get argument */
     auto value = me->_model3->Read32(addr);
     lua_pushinteger(lua, value);  /* push result */
@@ -74,8 +95,9 @@ int LuaEngine::PPC_Read32(lua_State* lua)
 int LuaEngine::PPC_Write32(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isinteger(lua, 1));
-    assert(lua_isinteger(lua, 2));
+    if (!lua_isinteger(lua, 1) || !lua_isinteger(lua, 2)) {
+        return luaL_error(lua, "argument to PPC_Write32() is not an integer");
+    }
     int addr = lua_tointeger(lua, 1);  /* get argument */
     UINT32 data = (UINT32)(lua_tointeger(lua, 2)&0xFFFFFFFF);  /* get argument */
     me->_model3->Write32(addr, data);
@@ -86,7 +108,9 @@ int LuaEngine::PPC_Write32(lua_State* lua)
 int LuaEngine::PPC_Read64(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isinteger(lua, 1));
+    if (!lua_isinteger(lua, 1)) {
+        return luaL_error(lua, "argument to PPC_Read64() is not an integer");
+    }
     int addr = lua_tointeger(lua, 1);  /* get argument */
     auto value = me->_model3->Read64(addr);
     lua_pushinteger(lua, value);  /* push result */
@@ -95,8 +119,9 @@ int LuaEngine::PPC_Read64(lua_State* lua)
 int LuaEngine::PPC_Write64(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isinteger(lua, 1));
-    assert(lua_isinteger(lua, 2));
+    if (!lua_isinteger(lua, 1) || !lua_isinteger(lua, 2)) {
+        return luaL_error(lua, "argument to PPC_Write64() is not an integer");
+    }
     int addr = lua_tointeger(lua, 1);  /* get argument */
     UINT64 data = (UINT64)(lua_tointeger(lua, 2));  /* get argument */
     me->_model3->Write64(addr, data);
@@ -108,8 +133,10 @@ int LuaEngine::PPC_Write64(lua_State* lua)
 int LuaEngine::Gfx_SetWideScreen(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isnumber(lua, 1));
-    int mode = lua_tointeger(lua, 1);  /* get argument */
+    if (!lua_isnumber(lua, 1)) {
+        return luaL_error(lua, "argument to Gfx_SetWideScreen() is not a number");
+    }
+    int mode = lua_tonumber(lua, 1);  /* get argument */
     auto &config = me->_model3->GetConfig();
     if (mode==0)
         config.Set("WideScreen", false);
@@ -123,8 +150,10 @@ int LuaEngine::Gfx_SetWideScreen(lua_State* lua)
 int LuaEngine::Gfx_SetStretchBLow(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isnumber(lua, 1));
-    int mode = lua_tointeger(lua, 1);  /* get argument */
+    if (!lua_isnumber(lua, 1)) {
+        return luaL_error(lua, "argument to Gfx_SetStretchBLow() is not an number");
+    }
+    int mode = lua_tonumber(lua, 1);  /* get argument */
     auto& config = me->_model3->GetConfig();
     if (mode==0)
         config.Set("WideBackground", false);
@@ -146,7 +175,8 @@ void LuaEngine::Initialize(IEmulator* emulator)
     // Load basic lua libs?
     luaL_openlibs(_lua);
     // Register methods
-    RegisterMethodToLua("printMessage", printMessage);
+    RegisterMethodToLua("print", print);
+    RegisterMethodToLua("println", println);
     RegisterMethodToLua("PPC_Read8", PPC_Read8);
     RegisterMethodToLua("PPC_Read16", PPC_Read16);
     RegisterMethodToLua("PPC_Read32", PPC_Read32);
@@ -175,25 +205,36 @@ void LuaEngine::LoadScript(string filename)
     // Load from "Scripts/" subdirectory
     auto completefilemane = "Scripts/" + filename;
     if (luaL_loadfile(_lua, completefilemane.c_str())) {
-        string msg = "Something went wrong loading the chunk in " + filename + " (missing file or syntax error?)";
+        auto err = string(lua_tostring(_lua, -1));
+        string msg = "Something went wrong loading the chunk in " + filename + " (missing file or syntax error?): " + err + "\n";
         DebugLog(msg.c_str());
-        DebugLog(lua_tostring(_lua, -1));
         lua_pop(_lua, 1);
     } else {
         string msg = "Successfully loaded " + filename;
         DebugLog(msg.c_str());
         // Do a prime run to get all variables and functions declared
         if (lua_pcall(_lua, 0, 0, 0)) {
-            string msg = "Error while priming script " + filename;
+            auto err = string(lua_tostring(_lua, -1));
+            string msg = "Error while priming script " + filename + ": " + err + "\n";
             DebugLog(msg.c_str());
-            DebugLog(lua_tostring(_lua, -1));
             fprintf(stderr, msg.c_str());
         } else {
             ScriptLoaded = true;
         }
     }
 }
-
+void LuaEngine::SetGlobalString(string varname, string value)
+{
+    RegisterStringToLua(varname, value.c_str());
+}
+void LuaEngine::SetGlobalDouble(string varname, double value)
+{
+    RegisterDoubleToLua(varname, value);
+}
+void LuaEngine::SetGlobalInteger(string varname, long long value)
+{
+    RegisterIntegerToLua(varname, value);
+}
 
 void LuaEngine::Init()
 {
@@ -236,19 +277,23 @@ void LuaEngine::End()
 
 bool LuaEngine::CallLuaMethod(string name)
 {
+    // Update common globals
+    this->SetGlobalInteger("Ticks", CThread::GetTicks());
+    this->SetGlobalInteger("FrameId", _model3->GetTimings().frameId);
     // Find method
     lua_getglobal(_lua, name.c_str());
     if (lua_isnil(_lua, -1)) {
-        string msg = "Error in " + name + " (method missing?)";
+        string msg = "Error in " + name + " (method missing?)\n";
         DebugLog(msg.c_str());
         fprintf(stderr, msg.c_str());
         return false;
     }
     // Run the function
     if (lua_pcall(_lua, 0, 0, 0)) {
-        string msg = "Error in " + name;
+        luaL_traceback(_lua, _lua, lua_tostring(_lua, -1), 1);
+        auto err = string(lua_tostring(_lua, -1));
+        string msg = "Lua error in " + name + "(): " + err + "\n";
         DebugLog(msg.c_str());
-        DebugLog(lua_tostring(_lua, -1));
         fprintf(stderr, msg.c_str());
         return false;
     }
