@@ -123,6 +123,11 @@ public:
     static int PPC_Read32(lua_State* lua);
     static int PPC_Read64(lua_State* lua);
 
+    static int PPC_Write8(lua_State* lua);
+    static int PPC_Write16(lua_State* lua);
+    static int PPC_Write32(lua_State* lua);
+    static int PPC_Write64(lua_State* lua);
+
     static int Gfx_SetWideScreen(lua_State* lua);
     static int Gfx_SetStretchBLow(lua_State* lua);
 

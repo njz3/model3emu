@@ -22,23 +22,42 @@ int LuaEngine::printMessage(lua_State* lua)
 int LuaEngine::PPC_Read8(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isnumber(lua, 1));
+    assert(lua_isinteger(lua, 1));
     int addr = lua_tointeger(lua, 1);  /* get argument */
     auto value = me->_model3->Read8(addr);
 
     lua_pushinteger(lua, value);  /* push result */
     return 1;  /* number of results */
 }
-
+int LuaEngine::PPC_Write8(lua_State* lua)
+{
+    LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
+    assert(lua_isinteger(lua, 1));
+    assert(lua_isinteger(lua, 2));
+    int addr = lua_tointeger(lua, 1);  /* get argument */
+    UINT8 data = (UINT8)(lua_tointeger(lua, 2)&0xFF);  /* get argument */
+    me->_model3->Write8(addr, data);
+    return 1;  /* number of results */
+}
 // int PPC_Read16(int addr)
 int LuaEngine::PPC_Read16(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isnumber(lua, 1));
+    assert(lua_isinteger(lua, 1));
     int addr = lua_tointeger(lua, 1);  /* get argument */
     auto value = me->_model3->Read16(addr);
 
     lua_pushinteger(lua, value);  /* push result */
+    return 1;  /* number of results */
+}
+int LuaEngine::PPC_Write16(lua_State* lua)
+{
+    LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
+    assert(lua_isinteger(lua, 1));
+    assert(lua_isinteger(lua, 2));
+    int addr = lua_tointeger(lua, 1);  /* get argument */
+    UINT16 data = (UINT16)(lua_tointeger(lua, 2)&0xFFFF);  /* get argument */
+    me->_model3->Write16(addr, data);
     return 1;  /* number of results */
 }
 
@@ -46,25 +65,44 @@ int LuaEngine::PPC_Read16(lua_State* lua)
 int LuaEngine::PPC_Read32(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isnumber(lua, 1));
+    assert(lua_isinteger(lua, 1));
     int addr = lua_tointeger(lua, 1);  /* get argument */
     auto value = me->_model3->Read32(addr);
-
     lua_pushinteger(lua, value);  /* push result */
+    return 1;  /* number of results */
+}
+int LuaEngine::PPC_Write32(lua_State* lua)
+{
+    LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
+    assert(lua_isinteger(lua, 1));
+    assert(lua_isinteger(lua, 2));
+    int addr = lua_tointeger(lua, 1);  /* get argument */
+    UINT32 data = (UINT32)(lua_tointeger(lua, 2)&0xFFFFFFFF);  /* get argument */
+    me->_model3->Write32(addr, data);
     return 1;  /* number of results */
 }
 // int PPC_Read64(int area, int offset)
-// Lua does not handle 64 bits integer for now
+// Lua handles 64 bits integer
 int LuaEngine::PPC_Read64(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
-    assert(lua_isnumber(lua, 1));
+    assert(lua_isinteger(lua, 1));
     int addr = lua_tointeger(lua, 1);  /* get argument */
     auto value = me->_model3->Read64(addr);
-
     lua_pushinteger(lua, value);  /* push result */
     return 1;  /* number of results */
 }
+int LuaEngine::PPC_Write64(lua_State* lua)
+{
+    LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
+    assert(lua_isinteger(lua, 1));
+    assert(lua_isinteger(lua, 2));
+    int addr = lua_tointeger(lua, 1);  /* get argument */
+    UINT64 data = (UINT64)(lua_tointeger(lua, 2));  /* get argument */
+    me->_model3->Write64(addr, data);
+    return 1;  /* number of results */
+}
+
 
 // int Gfx_SetWideScreen(int mode)
 int LuaEngine::Gfx_SetWideScreen(lua_State* lua)
@@ -72,6 +110,11 @@ int LuaEngine::Gfx_SetWideScreen(lua_State* lua)
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
     assert(lua_isnumber(lua, 1));
     int mode = lua_tointeger(lua, 1);  /* get argument */
+    auto &config = me->_model3->GetConfig();
+    if (mode==0)
+        config.Set("WideScreen", false);
+    else
+        config.Set("WideScreen", true);
 
     return 0;  /* number of results */
 }
@@ -82,7 +125,12 @@ int LuaEngine::Gfx_SetStretchBLow(lua_State* lua)
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
     assert(lua_isnumber(lua, 1));
     int mode = lua_tointeger(lua, 1);  /* get argument */
-
+    auto& config = me->_model3->GetConfig();
+    if (mode==0)
+        config.Set("WideBackground", false);
+    else
+        config.Set("WideBackground", true);
+    
     return 0;  /* number of results */
 }
 #pragma endregion
@@ -103,6 +151,10 @@ void LuaEngine::Initialize(IEmulator* emulator)
     RegisterMethodToLua("PPC_Read16", PPC_Read16);
     RegisterMethodToLua("PPC_Read32", PPC_Read32);
     RegisterMethodToLua("PPC_Read64", PPC_Read64);
+    RegisterMethodToLua("PPC_Write8", PPC_Read8);
+    RegisterMethodToLua("PPC_Write16", PPC_Read16);
+    RegisterMethodToLua("PPC_Write32", PPC_Read32);
+    RegisterMethodToLua("PPC_Write64", PPC_Read64);
     RegisterMethodToLua("Gfx_SetWideScreen", Gfx_SetWideScreen);
     RegisterMethodToLua("Gfx_SetStretchBLow", Gfx_SetStretchBLow);
     // Register globals
@@ -126,14 +178,13 @@ void LuaEngine::LoadScript(string filename)
         string msg = "Something went wrong loading the chunk in " + filename + " (missing file or syntax error?)";
         DebugLog(msg.c_str());
         DebugLog(lua_tostring(_lua, -1));
-        fprintf(stderr, msg.c_str());
         lua_pop(_lua, 1);
     } else {
         string msg = "Successfully loaded " + filename;
         DebugLog(msg.c_str());
         // Do a prime run to get all variables and functions declared
         if (lua_pcall(_lua, 0, 0, 0)) {
-            string msg = "Error while priming script";
+            string msg = "Error while priming script " + filename;
             DebugLog(msg.c_str());
             DebugLog(lua_tostring(_lua, -1));
             fprintf(stderr, msg.c_str());
