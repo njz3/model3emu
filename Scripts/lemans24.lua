@@ -30,8 +30,9 @@ function Frame()
 	print("Drv=0x" .. string.format("%X", driveboard) .. " Lamps=0x")
     println(string.format("%X", lamps))
     
-    local gameState = 0x16
+	-- Do not known yet where to find the gamemode ...
 	-- local gameState = PPC_Read8(0x5010A4)
+    local gameState = 0x16
     -- println(gameState)
     
 	if   gameState==0x16	-- Ingame

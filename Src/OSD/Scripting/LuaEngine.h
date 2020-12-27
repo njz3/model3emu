@@ -1,7 +1,7 @@
 #pragma once
 #include "IScripting.h"
 
-
+#pragma region All of this only to be able to get the definition of CModel3
 #include "BlockFile.h"
 #include "Graphics/New3D/New3D.h"
 #include "Graphics/Render2D.h"
@@ -41,8 +41,9 @@
 #include "Network/NetBoard.h"
 #endif
 #include "Model3/Model3.h"
+#pragma endregion
 
-
+#pragma region Lua's includes
 #ifndef __LUA_INC_H__
 #define __LUA_INC_H__
 extern "C"
@@ -53,6 +54,7 @@ extern "C"
 }
 
 #endif // __LUA_INC_H__
+#pragma endregion
 
 using namespace std;
 
@@ -78,23 +80,41 @@ PostDraw()
     Called right after rendering the frame, and before blitting the frame to the screen (so you can add text
     and other images to the rendered image
 
+EndFrame()
+    Called when everything has been emulated (including sound, network), before the next frame will start
+
 End()
     Called when the emulator is about to terminate the emulation (use for cleanup or data persistence)
 
 Inside the LUA scripts you can access the emulator by using some helper functions provided by the emulator:
 
+Helpers:
+--------
+print(string text)
+println(string text)
+    Output a text to Supermodel's console
 
-ROM Access functions
+ROM Access functions:
+---------------------
+int PPC_Read8(int addr)
+int PPC_Read16(int addr)
+int PPC_Read32(int addr)
+int PPC_Read64(int addr)
+    Read byte/word/dword from ram or rom at specified address in the PPC addressing space
 
-int Romset_ReadByte(int area,int offset)
-int Romset_ReadWord(int area,int offset)
-int Romset_ReadDWord(int area,int offset)
-    Read byte/word/dword from rom files at specified area and offset
+PPC_Write8(int addr, int data)
+PPC_Write16(int addr, int data)
+PPC_Write32(int addr, int data)
+PPC_Write64(int addr, int data)
+    Write byte/word/dword to ram or patch rom at specified address in the PPC addressing space
 
-Romset_PatchByte(int area,int offset,int data)
-Romset_PatchWord(int area,int offset,int data)
-Romset_PatchDWord(int area,int offset,int data)
-    Write byte/word/dword to rom files at specified area and offset
+
+Tweaks:
+-------
+Gfx_SetWideScreen(int mode)
+    Change the "WideScreen" configuration flag in realtime
+Gfx_SetStretchBLow(int mode)
+    Change the "WideBackground" configuration flag in realtime
 
 */
 
@@ -145,6 +165,7 @@ public:
 protected:
     CModel3* _model3;
     lua_State* _lua;
+    // Used as runtime flags to avoid running pcall() when the script or method does not exist
     bool ScriptLoaded;
     bool HasHook[6];
 };

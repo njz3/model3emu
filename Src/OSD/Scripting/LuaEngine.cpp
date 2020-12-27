@@ -4,8 +4,8 @@
 
 
 
-
-#pragma region Method registered in Lua 
+#pragma region Method registered in Lua
+// print(string text)
 int LuaEngine::print(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
@@ -24,6 +24,7 @@ int LuaEngine::print(lua_State* lua)
     }
     return 0;
 }
+// println(string text)
 int LuaEngine::println(lua_State* lua)
 {
     print(lua); printf("\n");
@@ -44,6 +45,7 @@ int LuaEngine::PPC_Read8(lua_State* lua)
     lua_pushinteger(lua, value);  /* push result */
     return 1;  /* number of results */
 }
+// PPC_Write8(int addr, int data)
 int LuaEngine::PPC_Write8(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
@@ -68,6 +70,7 @@ int LuaEngine::PPC_Read16(lua_State* lua)
     lua_pushinteger(lua, value);  /* push result */
     return 1;  /* number of results */
 }
+// PPC_Write16(int addr, int data)
 int LuaEngine::PPC_Write16(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
@@ -92,6 +95,7 @@ int LuaEngine::PPC_Read32(lua_State* lua)
     lua_pushinteger(lua, value);  /* push result */
     return 1;  /* number of results */
 }
+// PPC_Write32(int addr, int data)
 int LuaEngine::PPC_Write32(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
@@ -103,8 +107,8 @@ int LuaEngine::PPC_Write32(lua_State* lua)
     me->_model3->Write32(addr, data);
     return 1;  /* number of results */
 }
-// int PPC_Read64(int area, int offset)
-// Lua handles 64 bits integer
+// int PPC_Read64(int addr)
+// Lua handles 64 bits integer using 0x notation
 int LuaEngine::PPC_Read64(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
@@ -116,6 +120,7 @@ int LuaEngine::PPC_Read64(lua_State* lua)
     lua_pushinteger(lua, value);  /* push result */
     return 1;  /* number of results */
 }
+// PPC_Write64(int addr, int data)
 int LuaEngine::PPC_Write64(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
@@ -129,7 +134,7 @@ int LuaEngine::PPC_Write64(lua_State* lua)
 }
 
 
-// int Gfx_SetWideScreen(int mode)
+// Gfx_SetWideScreen(int mode)
 int LuaEngine::Gfx_SetWideScreen(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
@@ -146,7 +151,7 @@ int LuaEngine::Gfx_SetWideScreen(lua_State* lua)
     return 0;  /* number of results */
 }
 
-// int Gfx_SetWideScreen(int mode)
+// Gfx_SetWideScreen(int mode)
 int LuaEngine::Gfx_SetStretchBLow(lua_State* lua)
 {
     LuaEngine* me = (LuaEngine*)lua_touserdata(lua, lua_upvalueindex(1));
