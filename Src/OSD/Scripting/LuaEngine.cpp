@@ -39,7 +39,7 @@ int LuaEngine::PPC_Read8(lua_State* lua)
     if (!lua_isinteger(lua, 1)) {
         return luaL_error(lua, "argument to PPC_Read8() is not an integer");
     }
-    int addr = lua_tointeger(lua, 1);  /* get argument */
+    UINT32 addr = (UINT32)lua_tointeger(lua, 1);  /* get argument */
     auto value = me->_model3->Read8(addr);
 
     lua_pushinteger(lua, value);  /* push result */
@@ -52,7 +52,7 @@ int LuaEngine::PPC_Write8(lua_State* lua)
     if (!lua_isinteger(lua, 1) || !lua_isinteger(lua, 2)) {
         return luaL_error(lua, "argument to PPC_Write8() is not an integer");
     }
-    int addr = lua_tointeger(lua, 1);  /* get argument */
+    UINT32 addr = (UINT32)lua_tointeger(lua, 1);  /* get argument */
     UINT8 data = (UINT8)(lua_tointeger(lua, 2)&0xFF);  /* get argument */
     me->_model3->Write8(addr, data);
     return 1;  /* number of results */
@@ -64,7 +64,7 @@ int LuaEngine::PPC_Read16(lua_State* lua)
     if (!lua_isinteger(lua, 1)) {
         return luaL_error(lua, "argument to PPC_Read16() is not an integer");
     }
-    int addr = lua_tointeger(lua, 1);  /* get argument */
+    UINT32 addr = (UINT32)lua_tointeger(lua, 1);  /* get argument */
     auto value = me->_model3->Read16(addr);
 
     lua_pushinteger(lua, value);  /* push result */
@@ -77,7 +77,7 @@ int LuaEngine::PPC_Write16(lua_State* lua)
     if (!lua_isinteger(lua, 1) || !lua_isinteger(lua, 2)) {
         return luaL_error(lua, "argument to PPC_Write16() is not an integer");
     }
-    int addr = lua_tointeger(lua, 1);  /* get argument */
+    UINT32 addr = (UINT32)lua_tointeger(lua, 1);  /* get argument */
     UINT16 data = (UINT16)(lua_tointeger(lua, 2)&0xFFFF);  /* get argument */
     me->_model3->Write16(addr, data);
     return 1;  /* number of results */
@@ -90,7 +90,7 @@ int LuaEngine::PPC_Read32(lua_State* lua)
     if (!lua_isinteger(lua, 1)) {
         return luaL_error(lua, "argument to PPC_Read32() is not an integer");
     }
-    int addr = lua_tointeger(lua, 1);  /* get argument */
+    UINT32 addr = (UINT32)lua_tointeger(lua, 1);  /* get argument */
     auto value = me->_model3->Read32(addr);
     lua_pushinteger(lua, value);  /* push result */
     return 1;  /* number of results */
@@ -102,7 +102,7 @@ int LuaEngine::PPC_Write32(lua_State* lua)
     if (!lua_isinteger(lua, 1) || !lua_isinteger(lua, 2)) {
         return luaL_error(lua, "argument to PPC_Write32() is not an integer");
     }
-    int addr = lua_tointeger(lua, 1);  /* get argument */
+    UINT32 addr = (UINT32)lua_tointeger(lua, 1);  /* get argument */
     UINT32 data = (UINT32)(lua_tointeger(lua, 2)&0xFFFFFFFF);  /* get argument */
     me->_model3->Write32(addr, data);
     return 1;  /* number of results */
@@ -115,7 +115,7 @@ int LuaEngine::PPC_Read64(lua_State* lua)
     if (!lua_isinteger(lua, 1)) {
         return luaL_error(lua, "argument to PPC_Read64() is not an integer");
     }
-    int addr = lua_tointeger(lua, 1);  /* get argument */
+    UINT32 addr = (UINT32)lua_tointeger(lua, 1);  /* get argument */
     auto value = me->_model3->Read64(addr);
     lua_pushinteger(lua, value);  /* push result */
     return 1;  /* number of results */
@@ -127,7 +127,7 @@ int LuaEngine::PPC_Write64(lua_State* lua)
     if (!lua_isinteger(lua, 1) || !lua_isinteger(lua, 2)) {
         return luaL_error(lua, "argument to PPC_Write64() is not an integer");
     }
-    int addr = lua_tointeger(lua, 1);  /* get argument */
+    UINT32 addr = (UINT32)lua_tointeger(lua, 1);  /* get argument */
     UINT64 data = (UINT64)(lua_tointeger(lua, 2));  /* get argument */
     me->_model3->Write64(addr, data);
     return 1;  /* number of results */
@@ -141,7 +141,7 @@ int LuaEngine::Gfx_SetWideScreen(lua_State* lua)
     if (!lua_isnumber(lua, 1)) {
         return luaL_error(lua, "argument to Gfx_SetWideScreen() is not a number");
     }
-    int mode = lua_tonumber(lua, 1);  /* get argument */
+    int mode = (int)lua_tonumber(lua, 1);  /* get argument */
     auto &config = me->_model3->GetConfig();
     if (mode==0)
         config.Set("WideScreen", false);
@@ -158,7 +158,7 @@ int LuaEngine::Gfx_SetStretchBLow(lua_State* lua)
     if (!lua_isnumber(lua, 1)) {
         return luaL_error(lua, "argument to Gfx_SetStretchBLow() is not an number");
     }
-    int mode = lua_tonumber(lua, 1);  /* get argument */
+    int mode = (int)lua_tonumber(lua, 1);  /* get argument */
     auto& config = me->_model3->GetConfig();
     if (mode==0)
         config.Set("WideBackground", false);

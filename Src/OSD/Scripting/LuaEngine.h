@@ -43,7 +43,7 @@
 #include "Model3/Model3.h"
 #pragma endregion
 
-#pragma region Lua's includes
+#pragma region Lua includes
 #ifndef __LUA_INC_H__
 #define __LUA_INC_H__
 extern "C"
