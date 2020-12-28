@@ -67,9 +67,6 @@ struct FrameTimings
  */
 class CModel3: public IEmulator, public IBus, public IPCIDevice
 {
-    /*friend class Iscripting;
-    friend class LuaScripting;
-    */
 public:
   // IEmulator interface
   bool PauseThreads(void);
@@ -85,7 +82,7 @@ public:
   const Game &GetGame(void) const;
   void AttachRenderers(CRender2D *Render2DPtr, IRender3D *Render3DPtr);
   void AttachInputs(CInputs *InputsPtr);  
-  void AttachOutputs(COutputs* OutputsPtr);
+  void AttachOutputs(COutputs *OutputsPtr);
   void AttachScripting(IScripting* scriptEngine);
   bool Init(void);
   // For Scripting tweaks
@@ -104,8 +101,7 @@ public:
   void Write16(UINT32 addr, UINT16 data);
   void Write32(UINT32 addr, UINT32 data);
   void Write64(UINT32 addr, UINT64 data);
-  
-  
+    
   /*
    * LoadGame(game, rom_set):
    *

@@ -3130,16 +3130,16 @@ void CModel3::AttachInputs(CInputs *InputsPtr)
   DebugLog("Model 3 attached inputs\n");
 }
 
-void CModel3::AttachOutputs(COutputs* OutputsPtr)
+void CModel3::AttachOutputs(COutputs *OutputsPtr)
 {
-    Outputs = OutputsPtr;
-    Outputs->SetGame(m_game);
-    Outputs->Attached();
+  Outputs = OutputsPtr;
+  Outputs->SetGame(m_game);
+  Outputs->Attached();
 
-    if (DriveBoard.IsAttached())
-        DriveBoard.AttachOutputs(Outputs);
+  if (DriveBoard.IsAttached())
+    DriveBoard.AttachOutputs(Outputs);
 
-    DebugLog("Model 3 attached outputs\n");
+  DebugLog("Model 3 attached outputs\n");
 }
 
 void CModel3::AttachScripting(IScripting* scriptEngine)
