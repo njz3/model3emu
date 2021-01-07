@@ -1387,7 +1387,7 @@ static Util::Config::Node DefaultConfig()
   // CSoundBoard
   config.Set("EmulateSound", true);
   config.Set("Balance", "0");
-  config.Set("SoundFreq", 57.6); // 60.0?
+  config.Set("SoundFreq", 57.5); // 60.0?
   // CDSB
   config.Set("EmulateDSB", true);
   config.Set("SoundVolume", "100");
