@@ -533,6 +533,7 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
     <ClInclude Include="..\Src\Model3\Crypto.h" />
     <ClInclude Include="..\Src\Model3\DriveBoard.h" />
     <ClInclude Include="..\Src\Model3\DSB.h" />
+    <ClInclude Include="..\Src\Model3\IEmulator.h" />
     <ClInclude Include="..\Src\Model3\IRQ.h" />
     <ClInclude Include="..\Src\Model3\JTAG.h" />
     <ClInclude Include="..\Src\Model3\Model3.h" />
