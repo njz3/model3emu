@@ -458,7 +458,7 @@ UINT8 CModel3::ReadInputs(unsigned reg)
       }
     }
     return data;
-  
+
   case 0x10: // Drive board
       return OutputRegister[0];
   case 0x14: // Lamps
@@ -1468,7 +1468,6 @@ void CModel3::Write8(UINT32 addr, UINT8 data)
       //printf("CMODEL3 : unknown W8 mirror : %x\n", addr >> 16);
       break;
     }
-    OutputRegister[(addr>>16)&0xFF] = data;
 
     DebugLog("PC=%08X\twrite8 : %08X=%02X\n", ppc_get_pc(), addr, data);    
     break;
@@ -2910,7 +2909,7 @@ void CModel3::Reset(void)
 #endif
   timings.frameTicks = 0;
   timings.frameId = 0;
-
+  
   DebugLog("Model 3 reset\n");
 }
 
@@ -3363,7 +3362,7 @@ CModel3::~CModel3(void)
   //Dump("bankedCrom", &crom[0x800000], 0x7000000, true, false);
   //Dump("soundROM", soundROM, 0x80000, false, true);
   //Dump("sampleROM", sampleROM, 0x800000, false, true); 
-
+  
   ScriptEngine->End();
 
   // Stop all threads
