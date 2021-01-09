@@ -1199,6 +1199,15 @@ int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *In
       // Make a screenshot
       Screenshot();
     }
+    else if (Inputs->uiReloadScript->Pressed()) 
+    {
+        if (scripting!=NULL) {
+            // Close it first
+            scripting->End();
+            // Re-attach same scripting engine
+            Model3->AttachScripting(scripting);
+        }
+    }
 #ifdef SUPERMODEL_DEBUGGER
       else if (Debugger != NULL && Inputs->uiEnterDebugger->Pressed())
       {

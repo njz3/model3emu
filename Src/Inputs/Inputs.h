@@ -106,6 +106,7 @@ public:
   CSwitchInput  *uiDumpInpState;
   CSwitchInput  *uiDumpTimings;
   CSwitchInput  *uiScreenshot;
+  CSwitchInput  *uiReloadScript;
 #ifdef SUPERMODEL_DEBUGGER
   CSwitchInput  *uiEnterDebugger;
 #endif
