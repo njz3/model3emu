@@ -87,7 +87,7 @@ static Util::Config::Node s_runtime_config("Global");
  Display Management
 ******************************************************************************/
 
-static SDL_Window *s_window = nullptr;
+SDL_Window *s_window = nullptr;
 
 /*
  * Position and size of rectangular region within OpenGL display to render to.

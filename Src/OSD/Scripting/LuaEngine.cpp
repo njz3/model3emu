@@ -133,6 +133,7 @@ int LuaEngine::PPC_Write64(lua_State* lua)
     return 1;  /* number of results */
 }
 
+extern SDL_Window* s_window;
 
 // Gfx_SetWideScreen(int mode)
 int LuaEngine::Gfx_SetWideScreen(lua_State* lua)
@@ -143,10 +144,63 @@ int LuaEngine::Gfx_SetWideScreen(lua_State* lua)
     }
     int mode = (int)lua_tonumber(lua, 1);  /* get argument */
     auto &config = me->_model3->GetConfig();
+    bool oldval = config["WideScreen"].ValueAsDefault<bool>(false);
+    bool newval;
     if (mode==0)
-        config.Set("WideScreen", false);
+        newval = false;
     else
-        config.Set("WideScreen", true);
+        newval = true;
+
+    if (oldval!=newval)
+    {
+        config.Set("WideScreen", newval);
+
+        unsigned  xOffset, yOffset;      // offset of renderer output within OpenGL viewport
+        unsigned  xResi, yResi;            // renderer output resolution (can be smaller than GL viewport)
+        unsigned  totalXRes, totalYRes;  // total resolution (the whole GL viewport)
+
+        // display config
+        totalXRes = xResi = config["XResolution"].ValueAs<unsigned>();
+        totalYRes = yResi = config["YResolution"].ValueAs<unsigned>();
+        bool stretch = config["Stretch"].ValueAs<bool>();
+
+        // window
+        int actualWidth;
+        int actualHeight;
+        SDL_GetWindowSize(s_window, &actualWidth, &actualHeight);
+        totalXRes = actualWidth;
+        totalYRes = actualHeight;
+
+        // If required, fix the aspect ratio of the resolution that the user passed to match Model 3 ratio
+        float xRes = float(xResi);
+        float yRes = float(yResi);
+        if (!stretch) { //if (keepAspectRatio) {
+            float model3Ratio = 496.0f/384.0f;
+            if (yRes < (xRes/model3Ratio))
+                xRes = yRes*model3Ratio;
+            if (xRes < (yRes*model3Ratio))
+                yRes = xRes/model3Ratio;
+        }
+
+        // Center the visible area
+        xOffset = (xResi - (unsigned)xRes)/2;
+        yOffset = (yResi - (unsigned)yRes)/2;
+
+        // If the desired resolution is smaller than what we got, re-center again
+        if (xResi < actualWidth)
+            xOffset += (actualWidth - xResi)/2;
+        if (yResi < actualHeight)
+            yOffset += (actualHeight - yResi)/2;
+
+        UINT32 correction = (UINT32)(((yRes / 384.f) * 2) + 0.5f);
+
+        if (newval) {
+            glScissor(0, correction, totalXRes, totalYRes - (correction * 2));
+        } else {
+            glScissor(xOffset + correction, yOffset + correction, xRes - (correction * 2), yRes - (correction * 3));
+        }
+    }
+
 
     return 0;  /* number of results */
 }
