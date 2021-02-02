@@ -1431,11 +1431,13 @@ static Util::Config::Node DefaultConfig()
   config.Set("XInputConstForceThreshold", "30");
   config.Set("XInputConstForceMax", "100");
   config.Set("XInputVibrateMax", "100");
+  config.Set("XInputStereoVibration", true);
   // SDL ForceFeedback
   config.Set("SDLConstForceMax", "100");
   config.Set("SDLSelfCenterMax", "100");
   config.Set("SDLFrictionMax", "100");
   config.Set("SDLVibrateMax", "100");
+  config.Set("SDLConstForceThreshold", "30");
 #ifdef NET_BOARD
   // NetBoard
   config.Set("EmulateNet", false);
@@ -1447,6 +1449,7 @@ static Util::Config::Node DefaultConfig()
   config.Set("SDLSelfCenterMax", "100");
   config.Set("SDLFrictionMax", "100");
   config.Set("SDLVibrateMax", "100");
+  config.Set("SDLConstForceThreshold", "30");
 #endif
   config.Set("Outputs", "none");
   config.Set("NetOutputsWithLF", "1");
