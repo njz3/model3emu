@@ -27,8 +27,8 @@ function Frame()
 	
 	local driveboard = PPC_Read8(0xfe040010)
 	local lamps = PPC_Read8(0xfe040014)
-	print("Drv=0x" .. string.format("%X", driveboard) .. " Lamps=0x")
-    println(string.format("%X", lamps))
+	-- print("Drv=0x" .. string.format("%X", driveboard) .. " Lamps=0x")
+    -- println(string.format("%X", lamps))
     
 	-- Do not known yet where to find the gamemode ...
 	-- local gameState = PPC_Read8(0x5010A4)
@@ -42,11 +42,11 @@ function Frame()
 	  or gameState==0x06	-- Attract VR Ini
 	  or gameState==0x07	-- Attract VR
 	then
-	 	Gfx_SetStretchBLow(1)	-- Stretch the bg tilemap (sky & clouds) when widescreen
-		Gfx_SetWideScreen(1)
+	 	-- Gfx_SetStretchBLow(1)	-- Stretch the bg tilemap (sky & clouds) when widescreen
+		-- Gfx_SetWideScreen(1)
 	else					-- No widescreen on the rest of the screens
-	 	Gfx_SetStretchBLow(0)
-		Gfx_SetWideScreen(0)
+	 	-- Gfx_SetStretchBLow(0)
+		-- Gfx_SetWideScreen(0)
 	end
 end
 
