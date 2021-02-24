@@ -438,7 +438,12 @@ void CDSB1::RunFrame(INT16 *audioL, INT16 *audioR)
 	}
 	
 	// While FIFO not empty, fire interrupts, run for up to one frame
-	for (cycles = (4000000/60)/4; (cycles > 0) && (fifoIdxR != fifoIdxW);  )
+	// BM: tried this https://www.supermodel3.com/Forum/viewtopic.php?f=7&t=1940
+#if 1
+	for (cycles = (4000000/60); (cycles > 0) && (fifoIdxR != fifoIdxW); )
+#else
+	for (cycles = (4000000/60)/4; (cycles > 0) && (fifoIdxR != fifoIdxW); )
+#endif
 	{
 		Z80.SetINT(true);	// fire an IRQ to indicate pending command
 		//printf("Z80 INT fired\n");
@@ -1019,8 +1024,17 @@ void CDSB2::RunFrame(INT16 *audioL, INT16 *audioR)
 	}	
 
 	// Per-frame interrupt
+	//BM: tried this https://www.supermodel3.com/Forum/viewtopic.php?f=7&t=1940
+#if 1
+	 // 1000 Hz timer(?) interrupt
+	for (int i = 0; i < 17; i++) {
+		M68KSetIRQ(2);
+		M68KRun(4000);
+	}
+#else
 	M68KSetIRQ(2);
 	M68KRun(4000000/60);
+#endif
 	
 	M68KGetContext(&M68K);
 	
