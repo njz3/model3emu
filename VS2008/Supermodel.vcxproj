@@ -118,7 +118,7 @@ if not exist "$(TargetDir)Saves" mkdir "$(TargetDir)Saves"
 if not exist "$(TargetDir)Scripts" mkdir "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)..\Docs\*" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)..\Config\*" "$(TargetDir)Config"
-xcopy /D /Y "$(ProjectDir)..\Scripts\*" "$(TargetDir)Scripts"
+xcopy /D /Y "$(ProjectDir)..\Scripts\*.lua" "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL2.dll" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
@@ -153,7 +153,7 @@ if not exist "$(TargetDir)Saves" mkdir "$(TargetDir)Saves"
 if not exist "$(TargetDir)Scripts" mkdir "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)..\Docs\*" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)..\Config\*" "$(TargetDir)Config"
-xcopy /D /Y "$(ProjectDir)..\Scripts\*" "$(TargetDir)Scripts"
+xcopy /D /Y "$(ProjectDir)..\Scripts\*.lua" "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL2.dll" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"
 </Command>
@@ -189,7 +189,7 @@ if not exist "$(TargetDir)Saves" mkdir "$(TargetDir)Saves"
 if not exist "$(TargetDir)Scripts" mkdir "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)..\Docs\*" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)..\Config\*" "$(TargetDir)Config"
-xcopy /D /Y "$(ProjectDir)..\Scripts\*" "$(TargetDir)Scripts"
+xcopy /D /Y "$(ProjectDir)..\Scripts\*.lua" "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL2.dll" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
@@ -228,7 +228,7 @@ if not exist "$(TargetDir)Saves" mkdir "$(TargetDir)Saves"
 if not exist "$(TargetDir)Scripts" mkdir "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)..\Docs\*" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)..\Config\*" "$(TargetDir)Config"
-xcopy /D /Y "$(ProjectDir)..\Scripts\*" "$(TargetDir)Scripts"
+xcopy /D /Y "$(ProjectDir)..\Scripts\*.lua" "$(TargetDir)Scripts"
 xcopy /D /Y "$(ProjectDir)\SDL\$(Platform)\$(Configuration)\SDL2.dll" "$(TargetDir)"
 xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>

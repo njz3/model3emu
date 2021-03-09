@@ -1,7 +1,8 @@
 /**
  ** Supermodel
  ** A Sega Model 3 Arcade Emulator.
- ** Copyright 2011 Bart Trzynadlowski, Nik Henson 
+ ** Copyright 2011-2021 Bart Trzynadlowski, Nik Henson, Ian Curtis,
+ **                     Harry Tuttle, and Spindizzi
  **
  ** This file is part of Supermodel.
  **
@@ -30,8 +31,6 @@
  * ---------
  * - Should MPEG_SetLoop() check for loopEnd==0? This causes crashes. Usually
  *   only occurs when loopStart is also 0, and that can only be checked here.
- * - Volume fade out in Daytona 2 is much too slow. Probably caused by 68K
- *	 timing or interrupts.
  * - Check actual MPEG sample rate. So far, all games seem to use 32 KHz, which
  *   may be a hardware requirement, but if other sampling rates are allowable,
  *   the code here will fail (it is hard coded for 32 KHz).
@@ -40,6 +39,7 @@
 
 #include "Supermodel.h"
 #include "Sound/MPEG/MpegAudio.h"
+#include <algorithm>
 
 /******************************************************************************
  Resampler
@@ -438,12 +438,7 @@ void CDSB1::RunFrame(INT16 *audioL, INT16 *audioR)
 	}
 	
 	// While FIFO not empty, fire interrupts, run for up to one frame
-	// BM: tried this https://www.supermodel3.com/Forum/viewtopic.php?f=7&t=1940
-#if 1
 	for (cycles = (4000000/60); (cycles > 0) && (fifoIdxR != fifoIdxW); )
-#else
-	for (cycles = (4000000/60)/4; (cycles > 0) && (fifoIdxR != fifoIdxW); )
-#endif
 	{
 		Z80.SetINT(true);	// fire an IRQ to indicate pending command
 		//printf("Z80 INT fired\n");
@@ -1020,22 +1015,29 @@ void CDSB2::RunFrame(INT16 *audioL, INT16 *audioR)
 		
 		M68KSetIRQ(1);	// indicate pending command
 		//printf("68K INT fired\n");
-		M68KRun(500);
+		m_cyclesElapsedThisFrame += M68KRun(500);
 	}	
 
-	// Per-frame interrupt
-	//BM: tried this https://www.supermodel3.com/Forum/viewtopic.php?f=7&t=1940
-#if 1
-	 // 1000 Hz timer(?) interrupt
-	for (int i = 0; i < 17; i++) {
-		M68KSetIRQ(2);
-		M68KRun(4000);
-	}
-#else
-	M68KSetIRQ(2);
-	M68KRun(4000000/60);
-#endif
-	
+    // Matthew Daniels made the interesting discovery that IRQ2 may in fact be a timer interrupt
+    // rather than a per-frame interrupt.For Daytona 2 and Sega Rally 2, assuming a value
+    // of 1KHz fixes music fade outs and some timing issues. It is very likely this is a
+    // configurable timer and we should be on the look-out for games which appear to use
+    // different values. It is equally likely that all games share a similar code base and
+    // use 1KHz as the timer rate.
+    while (m_cyclesElapsedThisFrame < k_framePeriod)
+	{
+        if (m_cyclesElapsedThisFrame >= m_nextTimerInterruptCycles)
+		{
+            // Fire timer interrupt and schedule next one
+            M68KSetIRQ(2);
+            m_nextTimerInterruptCycles += k_timerPeriod;
+        }
+        int cyclesToRun = (std::min)(m_nextTimerInterruptCycles, k_framePeriod) - m_cyclesElapsedThisFrame;
+        m_cyclesElapsedThisFrame += M68KRun(cyclesToRun);
+    }
+    m_cyclesElapsedThisFrame -= k_framePeriod;
+    m_nextTimerInterruptCycles -= k_framePeriod;
+
 	M68KGetContext(&M68K);
 	
 	// Decode MPEG for this frame
@@ -1094,6 +1096,9 @@ void CDSB2::Reset(void)
 	//printf("DSB2 PC=%06X\n", M68KGetPC());
 	M68KGetContext(&M68K);
 	
+	m_cyclesElapsedThisFrame = 0;
+	m_nextTimerInterruptCycles = k_timerPeriod;
+
 	DebugLog("DSB2 Reset\n");
 }
 
@@ -1176,6 +1181,11 @@ void CDSB2::LoadState(CBlockFile *StateFile)
 	M68KLoadState(StateFile, "DSB2 68K");
 	M68KGetContext(&M68K);
 	
+	// Technically these should be saved/restored rather than being reset but that would mean
+	// the save state format has to be modified and the difference would be imperceptible anyway
+	m_cyclesElapsedThisFrame = 0;
+	m_nextTimerInterruptCycles = k_timerPeriod;
+
 	// Restart MPEG audio at the appropriate position
 	if (isPlaying)
 	{

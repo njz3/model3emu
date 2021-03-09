@@ -36,7 +36,7 @@
 #include "Sound/SCSP.h"
 #include "Model3/SoundBoard.h"
 #include "Model3/DSB.h"
-#include "Model3/DriveBoard.h"
+#include "Model3/DriveBoard/DriveBoard.h"
 #ifdef NET_BOARD
 #include "Network/NetBoard.h"
 #endif

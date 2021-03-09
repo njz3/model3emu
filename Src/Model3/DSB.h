@@ -1,7 +1,8 @@
 /**
  ** Supermodel
  ** A Sega Model 3 Arcade Emulator.
- ** Copyright 2011 Bart Trzynadlowski, Nik Henson 
+ ** Copyright 2011-2021 Bart Trzynadlowski, Nik Henson, Ian Curtis,
+ **                     Harry Tuttle, and Spindizzi
  **
  ** This file is part of Supermodel.
  **
@@ -317,6 +318,10 @@ private:
 	
 	// M68K CPU
 	M68KCtx	M68K;
+	static const int k_framePeriod = 4000000/60;
+	static const int k_timerPeriod = 4000000/1000; // 1KHz timer
+	int m_cyclesElapsedThisFrame;
+	int m_nextTimerInterruptCycles;
 };
 
 
