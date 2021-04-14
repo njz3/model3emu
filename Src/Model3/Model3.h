@@ -32,6 +32,9 @@
 #include "Model3/IEmulator.h"
 #include "Model3/JTAG.h"
 #include "Model3/Crypto.h"
+#ifdef NET_BOARD
+#include "Network/INetBoard.h"
+#endif // NET_BOARD
 #include "Util/NewConfig.h"
 #include "Scripting/IScripting.h"
 
@@ -145,9 +148,9 @@ public:
   * Returns a reference to the net board.
 
   * Returns:
-  *    Pointer to CNetBoard object.
+  *    Pointer to CNetBoard or CSimNetBoard object.
   */
-  CNetBoard * GetNetBoard(void);
+  INetBoard * GetNetBoard(void);
 #endif
 
   /*
@@ -312,7 +315,7 @@ private:
   CCrypto     m_cryptoDevice; // Encryption device
   CJTAG       m_jtag;         // JTAG interface
 #ifdef NET_BOARD
-  CNetBoard   NetBoard;		  // Net board
+  INetBoard   *NetBoard;      // Net board
   bool		m_runNetBoard;
 #endif
   IScripting* ScriptEngine;   // Scripting engine

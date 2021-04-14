@@ -217,6 +217,10 @@
 #include "Supermodel.h"
 #include "Game.h"
 #include "ROMSet.h"
+#ifdef NET_BOARD
+#include "Network/NetBoard.h"
+#include "Network/SimNetBoard.h"
+#endif // NET_BOARD
 #include "Util/Format.h"
 #include "Util/ByteSwap.h"
 #include <functional>
@@ -1016,7 +1020,7 @@ UINT8 CModel3::Read8(UINT32 addr)
     {
     case 0:
       //printf("R8 netbuffer @%x=%x\n", (addr & 0xFFFF), netBuffer[(addr & 0xFFFF)]);
-      return netBuffer[(addr & 0xFFFF)];
+      return netBuffer[(addr & 0xFFFF) ^ 2];
 
     case 1: // ioreg 32bits access in 16bits environment
       if (addr > 0xc00101ff)
@@ -1156,7 +1160,7 @@ UINT16 CModel3::Read16(UINT32 addr)
     {
     case 0:
       //printf("R16 netbuffer @%x=%x\n", (addr & 0xFFFF), FLIPENDIAN16(*(UINT16 *)&netBuffer[(addr & 0xFFFF)]));
-      result = *(UINT16 *)&netBuffer[(addr & 0xFFFF)];
+      result = *(UINT16 *)&netBuffer[(addr & 0xFFFF) ^ 2];
       return FLIPENDIAN16(result); // result
     default:
       printf("CMODEL3 : unknown R16 : %x (C0)\n", addr);
@@ -1498,7 +1502,7 @@ void CModel3::Write8(UINT32 addr, UINT8 data)
       {
       case 0:
         //printf("W8 netbuffer @%x<-%x\n", (addr & 0xFFFF), data);
-        *(UINT8 *)&netBuffer[(addr & 0xFFFF)] = data;
+        *(UINT8 *)&netBuffer[(addr & 0xFFFF) ^ 2] = data;
         break;
 
       case 1: // ioreg 32bits access to 16bits range
@@ -1519,6 +1523,8 @@ void CModel3::Write8(UINT32 addr, UINT8 data)
         }
 
         //printf("W8 netram @%x<-%x\n", (addr & 0x1FFFF), data);
+        if (((addr & 0x1FFFF) == 0x180) && (data == 0x00))
+            NetBoard->Reset();
         *(UINT8 *)&netRAM[(addr & 0x1FFFF)/2] = data;
         break;
       /*case 3:
@@ -1529,13 +1535,6 @@ void CModel3::Write8(UINT32 addr, UINT8 data)
       default:
         printf("W8 ATTENTION OUT OF RANGE\n");
         break;
-      }
-
-      if ((*(UINT8 *)&netBuffer[(0xc00100c0 & 0x3FFFF)] == 0xff) && NetBoard.CodeReady == false) // c0=180/2
-      {
-        printf("Network code copy ending\n");
-        NetBoard.CodeReady = true;
-        NetBoard.Reset();
       }
 
       break;
@@ -1633,7 +1632,7 @@ void CModel3::Write16(UINT32 addr, UINT16 data)
     {
     case 0:
       //printf("W16 netbuffer @%x<-%x\n", (addr & 0xFFFF), data);
-      *(UINT16 *)&netBuffer[(addr & 0xFFFF)] = FLIPENDIAN16(data);
+      *(UINT16 *)&netBuffer[(addr & 0xFFFF) ^ 2] = FLIPENDIAN16(data);
       break;
 
     default:
@@ -1862,6 +1861,8 @@ void CModel3::Write32(UINT32 addr, UINT32 data)
         }
 
         //printf("W32 netram @%x<-%x\n", (addr & 0x1FFFF), data);
+        if (((addr & 0x1FFFF) == 0x180) && ((data >> 16) == 0x0000))
+            NetBoard->Reset();
         *(UINT16 *)&netRAM[((addr & 0x1FFFF) / 2)] = FLIPENDIAN16(data >> 16);
         break;
       /*case 3:
@@ -1871,20 +1872,6 @@ void CModel3::Write32(UINT32 addr, UINT32 data)
       default:
         printf("W32 ATTENTION OUT OF RANGE\n");
         break;
-      }
-
-      if ((*(UINT16 *)&netBuffer[(0xc00100c0 & 0x3FFFF)] == FLIPENDIAN16(0x0000)) && NetBoard.CodeReady == true) // c0=180/2 // reset net when reboot - not perfect, I think memory must be cleared
-      {
-        printf("Network pause\n");
-        NetBoard.CodeReady = false;
-        NetBoard.Reset();
-      }
-
-      if ((*(UINT16 *)&netBuffer[(0xc0010088 & 0x3FFFF)] == FLIPENDIAN16(0x0080)) && NetBoard.CodeReady == false) // 88=110/2
-      {
-        printf("Network code copy ending\n");
-        NetBoard.CodeReady = true;
-        NetBoard.Reset();
       }
 
       break;
@@ -2075,8 +2062,19 @@ void CModel3::RunFrame(void)
     if (m_gpuMultiThreaded)
       SyncGPUs();
 
-    /*if (NetBoard.IsAttached())
-      RunNetBoardFrame();*/
+#ifdef NET_BOARD
+    if (NetBoard->IsRunning() && m_config["SimulateNet"].ValueAs<bool>())
+    {
+        // ppc irq network needed ? no effect, is it really active/needed ?
+        IRQ.Assert(0x10);
+        ppc_execute(200); // give PowerPC time to acknowledge IRQ
+        IRQ.Deassert(0x10);
+        ppc_execute(200); // acknowledge that IRQ was deasserted (TODO: is this really needed?)
+        RunNetBoardFrame();
+        // Hum hum, if runnetboardframe is called at 1st place or between ppc irq assert/deassert, spikout freezes just after the gate with net error
+        // if runnetboardframe is called after ppc irq assert/deassert, spikout works
+  }
+#endif
   }
   else
   {
@@ -2088,13 +2086,11 @@ void CModel3::RunFrame(void)
     if (DriveBoard->IsAttached())
       RunDriveBoardFrame();
 #ifdef NET_BOARD
-    if (NetBoard.IsAttached() && (m_config["EmulateNet"].ValueAs<bool>()) && ((*(UINT16 *)&netBuffer[(0xc00100C0 & 0x3FFFF)] == 0xFFFF) || (netBuffer[(0xc00100C0 & 0x3FFFF)] == 0xFF) || (*(UINT16 *)&netBuffer[(0xc00100C0 & 0x3FFFF)] == 0x0001)) && (NetBoard.CodeReady == true))
+    if (NetBoard->IsRunning())
     {
       // ppc irq network needed ? no effect, is it really active/needed ?
-      //RunNetBoardFrame();
       IRQ.Assert(0x10);
       ppc_execute(200); // give PowerPC time to acknowledge IRQ
-      //RunNetBoardFrame();
       IRQ.Deassert(0x10);
       ppc_execute(200); // acknowledge that IRQ was deasserted (TODO: is this really needed?)
       RunNetBoardFrame();
@@ -2252,7 +2248,7 @@ void CModel3::RunDriveBoardFrame(void)
 #ifdef NET_BOARD
 void CModel3::RunNetBoardFrame(void)
 {
-  NetBoard.RunFrame();
+  NetBoard->RunFrame();
 }
 #endif
 
@@ -2901,7 +2897,7 @@ void CModel3::Reset(void)
   timings.drvTicks = 0;
 #ifdef NET_BOARD
   timings.netTicks = 0;
-  NetBoard.CodeReady = false;
+  NetBoard->Reset();
 #endif
   timings.frameTicks = 0;
   timings.frameId = 0;
@@ -3094,8 +3090,6 @@ bool CModel3::LoadGame(const Game &game, const ROMSet &rom_set)
 
   // Print game information
   std::set<std::string> extra_hw;
-  std::string netboard_present = game.netboard_present;
-  std::transform(netboard_present.begin(), netboard_present.end(), netboard_present.begin(), ::tolower);
 
   if (DSB)
     extra_hw.insert(Util::Format() << "Digital Sound Board (Type " << game.mpeg_board << ")");
@@ -3110,7 +3104,7 @@ bool CModel3::LoadGame(const Game &game, const ROMSet &rom_set)
     extra_hw.insert("Joystick FFB Board");
   if (game.encryption_key)
     extra_hw.insert("Security Board");
-  if (netboard_present.compare("true")==0)
+  if (game.netboard_present)
     extra_hw.insert("Net Board");
   if (!game.version.empty())
     std::cout << "    Title:          " << game.title << " (" << game.version << ")" << std::endl;
@@ -3126,13 +3120,13 @@ bool CModel3::LoadGame(const Game &game, const ROMSet &rom_set)
 
   m_game = game;
 #ifdef NET_BOARD
-  NetBoard.GetGame(m_game);
-  if (OKAY != NetBoard.Init(netRAM, netBuffer))
+  NetBoard->GetGame(m_game);
+  if (OKAY != NetBoard->Init(netRAM, netBuffer))
   {
     return FAIL;
   }
 
-  m_runNetBoard = m_game.stepping != "1.0" && (NetBoard.IsAttached() && (m_config["EmulateNet"].ValueAs<bool>()));
+  m_runNetBoard = m_game.stepping != "1.0" && NetBoard->IsAttached();
 #endif
   return OKAY;
 }
@@ -3259,6 +3253,13 @@ bool CModel3::Init(void)
   PCIBus.AttachDevice(14,&SCSI);
   PCIBus.AttachDevice(16,this);
 
+#ifdef NET_BOARD
+  if (m_config["SimulateNet"].ValueAs<bool>())
+      NetBoard = new CSimNetBoard(m_config);
+  else
+      NetBoard = new CNetBoard(m_config);
+#endif // NET_BOARD
+
   DebugLog("Initialized Model 3 (allocated %1.1f MB)\n", memSizeMB);
 
   return OKAY;
@@ -3275,9 +3276,9 @@ CDriveBoard *CModel3::GetDriveBoard(void)
 }
 
 #ifdef NET_BOARD
-CNetBoard *CModel3::GetNetBoard(void)
+INetBoard *CModel3::GetNetBoard(void)
 {
-  return &NetBoard;
+  return NetBoard;
 }
 #endif
 
@@ -3288,9 +3289,6 @@ CModel3::CModel3(Util::Config::Node &config)
     TileGen(config),
     GPU(config),
     SoundBoard(config),
-#ifdef NET_BOARD
-    NetBoard(config),
-#endif
     m_jtag(GPU)
 {
   // Initialize pointers so dtor can know whether to free them

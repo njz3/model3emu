@@ -61,35 +61,35 @@
 // change port/ip you want, I only tested in local on same machine (watch your firewall)
 //
 // add for master
-// EmulateNet=1
-// port_in = 1970
-// port_out = 1971
+// Network=1
+// PortIn = 1970
+// PortOut = 1971
 // addr_out = "127.0.0.1"
 //
 // add for slave
-// EmulateNet=1
-// port_in = 1971
-// port_out = 1970
+// Network=1
+// PortIn = 1971
+// PortOut = 1970
 // addr_out = "127.0.0.1"
 //
 // or in case of 3 cabs
 //
 // add for master
-// EmulateNet=1
-// port_in = 1970
-// port_out = 1971
+// Network=1
+// PortIn = 1970
+// PortOut = 1971
 // addr_out = "127.0.0.1"
 //
 // add for slave1
-// EmulateNet=1
-// port_in = 1971
-// port_out = 1972
+// Network=1
+// PortIn = 1971
+// PortOut = 1972
 // addr_out = "127.0.0.1"
 //
 // add for slave2
-// EmulateNet=1
-// port_in = 1972
-// port_out = 1970
+// Network=1
+// PortIn = 1972
+// PortOut = 1970
 // addr_out = "127.0.0.1"
 
 //#define NET_DEBUG
@@ -98,8 +98,6 @@
 #include "NetBoard.h"
 #include "Util/Format.h"
 #include "Util/ByteSwap.h"
-#include "TCPSend.h"
-#include "TCPReceive.h"
 #include <algorithm>
 
 // few macros to make debugging a bit less painful
@@ -173,7 +171,7 @@ UINT8 CNetBoard::Read8(UINT32 a)
 			DebugLog("OUT OF RANGE RAM[%x]\n", a);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Info", "Out of Range", NULL);
 		}
-		return RAM[a];
+		return RAM[a ^ 1];
 
 	case 0x4:
 		//DebugLog("Netboard R8\tctrlrw[%x]=%x\n", a&0xff, ctrlrw[a&0xff]);
@@ -205,7 +203,7 @@ UINT8 CNetBoard::Read8(UINT32 a)
 			DebugLog("OUT OF RANGE CommRAM[%x]\n", a);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Info", "Out of Range", NULL);
 		}
-		return CommRAM[a & 0xffff];
+		return CommRAM[(a & 0xffff) ^ 1];
 
 	case 0xc: // dirt devils
 		//DebugLog("Netboard R8\tioreg[%x]=%x\t\t", a&0xff, ioreg[a&0xff]);
@@ -221,38 +219,38 @@ UINT8 CNetBoard::Read8(UINT32 a)
 			DebugLog("Netboard R8\tioreg[%x]=%x\t\treceive result status\n", a & 0xff, ioreg[a & 0xff]);
 			//return 0x5; /////////////////////////////////// pure hack for spikofe - must have the pure hack spikeout enable too ///////////////////////////////////////////////////////
 			if (Gameinfo.name.compare("spikeofe") == 0) return 0x5;
-			return ioreg[a&0xff];
+			return ioreg[(a&0xff) ^ 1];
 			break;
 
 		case 0x19: // ioreg[c0019]
 			DebugLog("Netboard R8\tioreg[%x]=%x\t\ttransmit result status\n", a & 0xff, ioreg[a & 0xff]);
-			return ioreg[a&0xff];
+			return ioreg[(a&0xff) ^ 1];
 			break;
 
 		case 0x81: // ioreg[c0081]
 			DebugLog("Netboard R8\tioreg[%x]=%x\t\n", a & 0xff, ioreg[a & 0xff]);
-			return ioreg[a&0xff];
+			return ioreg[(a&0xff) ^ 1];
 			break;
 
 		case 0x83: // ioreg[c0083]
 			DebugLog("Netboard R8\tioreg[%x]=%x\t\tirq status\n", a & 0xff, ioreg[a & 0xff]);
-			return ioreg[a&0xff];
+			return ioreg[(a&0xff) ^ 1];
 			break;
 
 		case 0x89: // ioreg[c0089]
 			DebugLog("Netboard R8\tioreg[%x]=%x\t\n", a & 0xff, ioreg[a & 0xff]);
-			return ioreg[a&0xff];
+			return ioreg[(a&0xff) ^ 1];
 			break;
 
 		case 0x8a: // ioreg[c008a]
 			DebugLog("Netboard R8\tioreg[%x]=%x\t\n", a & 0xff, ioreg[a & 0xff]);
-			return ioreg[a & 0xff];
+			return ioreg[(a&0xff) ^ 1];
 			break;
 
 		default:
 			DebugLog("unknown c00(%x)\n", a & 0xff);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Info", "Unknown R8 IOREG", NULL);
-			return ioreg[a&0xff];
+			return ioreg[(a&0xff) ^ 1];
 			break;
 
 		}
@@ -427,7 +425,7 @@ void CNetBoard::Write8(UINT32 a, UINT8 d)
 			DebugLog("OUT OF RANGE RAM[%x]\n", a);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Info", "Out of Range", NULL);
 		}
-		RAM[a] = d;
+		RAM[a ^ 1] = d;
 		break;
 
 	case 0x4:
@@ -480,7 +478,7 @@ void CNetBoard::Write8(UINT32 a, UINT8 d)
 			DebugLog("OUT OF RANGE CommRAM[%x]\n", a);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Info", "Out of Range", NULL);
 		}
-		CommRAM[a & 0xffff] = d;
+		CommRAM[(a & 0xffff) ^ 1] = d;
 		break;
 
 	case 0xc: // dirt devils
@@ -494,24 +492,24 @@ void CNetBoard::Write8(UINT32 a, UINT8 d)
 		switch (a & 0xff)
 		{
 		case 0x01: // ioreg[c0001]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			#ifdef NET_DEBUG
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			#endif
 			break;
 
 		case 0x03: // ioreg[c0003]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x05: // ioreg[c0005]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		/*case 0x15: // 0x00 0x01 0x80 // ioreg[c0015]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\t\t", a & 0xff, d);
 
 			if ((d & 0xFF) != 0x80)
@@ -536,7 +534,7 @@ void CNetBoard::Write8(UINT32 a, UINT8 d)
 			break;
 
 		case 0x17: // 0x00 0x8c // ioreg[c0017]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			//M68KSetIRQ(6); // si irq6 ici, reset master a la fin de la synchro
 			DebugLog("Netboard W8\tioreg[%x] <- %x\t\t", a & 0xff, d);
 			if ((d & 0xFF) == 0x8C)
@@ -583,50 +581,20 @@ void CNetBoard::Write8(UINT32 a, UINT8 d)
 			// slave follow with 15 17 then (set id node) 1b 1d
 
 		case 0x15: // 0x00 0x01 0x80 // ioreg[c0015]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\t\t", a & 0xff, d);
 
 			switch (d & 0xff)
 			{
 			case 0x80:
-				DebugLog("\nreceiving : \n");
-
-				//if (recv_offset > 0x1000)
-				if (recv_size < 0x0019) // must find a better condition
+				DebugLog("receive enable off=%x size=%x\n", recv_offset, recv_size);
 				{
-					//auto recv_data = udpReceive.ReadData(5000);
-					//DebugLog("-> nb recu : %x\n", recv_data.size());
-					//memcpy(CommRAM + recv_offset, recv_data.data(), recv_data.size());
-					//DebugLog("receive enable off=%x size=%x\n", recv_offset, recv_size);
-
-
-					DebugLog("receive enable off=%x size=%x\n", recv_offset, recv_size);
 					auto &recv_data = netr->Receive();
-					memcpy(CommRAM + recv_offset, recv_data.data(), recv_data.size());
-				}
-				else
-				{
-					DebugLog("receive enable original value off=%x size=%x\n", recv_offset, recv_size);
-
-					slot = (recv_size >> 12) & 0x0f;
-					recv_size = recv_size & 0x0fff;
-					recv_size = (recv_size << 4) | ((recv_size >> 8) & 0x000f);
-					recv_size = recv_size & 0x0fff;
-					if (slot != 0)
-					{
-						recv_size = recv_size * slot;
-					}
-					recv_offset = (recv_offset << 8) | (recv_offset >> 8);
-
-					//DebugLog("receive enable off=%x size=%x slot=%x\n", recv_offset, recv_size, slot);
-
-					//auto recv_data = udpReceive.ReadData(5000);
-					auto &recv_data = netr->Receive();
-					DebugLog("-> nb recu : %x\n", recv_data.size());
 					memcpy(CommRAM + recv_offset, recv_data.data(), recv_data.size());
 				}
 
 				#ifdef NET_DEBUG
+				DebugLog("receiving : ");
 				if (recv_size > 50) // too long to print so...
 				{
 					for (int i = 0; i < 100; i++)
@@ -661,7 +629,7 @@ void CNetBoard::Write8(UINT32 a, UINT8 d)
 			break;
 
 		case 0x17: // 0x00 0x8c // ioreg[c0017]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\t\t", a & 0xff, d);
 
 			switch (d & 0xff)
@@ -683,7 +651,7 @@ void CNetBoard::Write8(UINT32 a, UINT8 d)
 
 
 		case 0x19: // ioreg[c0019]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\t\ttransmit result status\n", a & 0xff, d);
 			break;
 
@@ -691,51 +659,15 @@ void CNetBoard::Write8(UINT32 a, UINT8 d)
 			// 1b is where real send must be because master always initiate dial with 1b (sure)
 
 		case 0x1b: // 0x80 // ioreg[c001b]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\t\t\n", a & 0xff, d);
 
 			switch (d & 0xff)
 			{
 			case 0x80:
-				//if (send_offset > 0x1000)
-				if (send_size < 0x0011)	// must find a better condition
-				{
-					//udpSend.SendAsync(addr_out.data(), port_out, send_size, (const char*)CommRAM + send_offset, 1000);
-					nets->Send((const char*)CommRAM + send_offset, send_size);
-
-					DebugLog("send enable off=%x size=%x\n", send_offset, send_size);
-				}
-				else
-				{
-					DebugLog("send enable original value off=%x size=%x\n", send_offset, send_size);
-
-					slot = (send_size >> 12) & 0x0f;
-					send_size = send_size & 0x0fff;
-					send_size = (send_size << 4) | ((send_size >> 8) & 0x000f);
-					send_size = send_size & 0x0fff;
-
-					//if (slot == 0) slot = (recv_size >> 12) & 0x0f; // cheat hack for harley,skichamp, and dirt in the same time
-					//if (Gameinfo.name.compare("dirtdvls")!=0) slot = (recv_size >> 12) & 0x0f;
-					//if (Gameinfo.name.find("dirtdvls") == std::string::npos) slot = (recv_size >> 12) & 0x0f;
-					//if (slot != 0)
-					//if ((slot != 0) && (((recv_size >> 12) & 0x0f) == 0)) // if dirt, warning may be lemans,von2 too (test name game ?)
-					//if (Gameinfo.name.compare("dirtdvls") == 0) // dirtdvls up to 4 players
-					if (Gameinfo.name.find("dirtdvls") != std::string::npos) // dirtdvls up to 4 players
-					{
-						send_size = send_size * slot * (CommRAM[0x0002] - 1); // dirtdvls CommRAM[0x0002] = number of machine
-					}
-					else
-					{
-						if (slot == 0) slot = (recv_size >> 12) & 0x0f; // for harley,skichamp
-						send_size = send_size * slot;
-					}
-					send_offset = (send_offset << 8) | (send_offset >> 8);
-
-					//udpSend.SendAsync(addr_out.data(), port_out, send_size, (const char*)CommRAM + send_offset, 1000);
-					nets->Send((const char*)CommRAM + send_offset, send_size);
-
-					DebugLog("send enable off=%x size=%x slot=%x\n", send_offset, send_size, slot);
-				}
+				nets->Send((const char*)CommRAM + send_offset, send_size);
+				DebugLog("send enable off=%x size=%x\n", send_offset, send_size);
+				
 				#ifdef NET_DEBUG
 				DebugLog("transmitting : ");
 				if (send_size > 50) //too big for print, so...
@@ -767,7 +699,7 @@ void CNetBoard::Write8(UINT32 a, UINT8 d)
 			break;
 
 		case 0x1d: // 0x8c // ioreg[c001d]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 
 			switch (d & 0xff)
@@ -788,12 +720,12 @@ void CNetBoard::Write8(UINT32 a, UINT8 d)
 
 
 		case 0x29: // ioreg[c0029]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x2f: // 0x00 or 0x00->0x40->0x00 or 0x82// ioreg[c002f]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 
 			/*if ((d & 0xff) == 0x00)
@@ -814,7 +746,7 @@ void CNetBoard::Write8(UINT32 a, UINT8 d)
 			break;
 
 		case 0x41: // ioreg[c0041]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			recv_offset = (recv_offset >> 8) | (d << 8 );
 
 			//DebugLog("recv off = %x\n",recv_offset);
@@ -822,105 +754,105 @@ void CNetBoard::Write8(UINT32 a, UINT8 d)
 			break;
 
 		case 0x43: // ioreg[c0043]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			recv_size = (recv_size >> 8) | (d << 8);
 			DebugLog("recv size = %x\n", d);
 			break;
 
 		case 0x45: // ioreg[c0045]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			send_offset = (send_offset >> 8) | (d << 8);
 			//DebugLog("send off = %x\n", send_offset);
 			DebugLog("send off = %x\n", d);
 			break;
 
 		case 0x47: // ioreg[c0047]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			send_size = (send_size >> 8) | (d << 8);
 			//DebugLog("send size = %x\n", send_size);
 			DebugLog("send size = %x\n", d);
 			break;
 
 		case 0x51: //0x04 0x18 // ioreg[c0051]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x55: // ioreg[c0055]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x57: // 0x04->0x09 // ioreg[c0057]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x59: // ioreg[c0059]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x5b: // ioreg[c005b]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x5d: // ioreg[c005d]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x5f: // ioreg[c005f]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x81: // ioreg[c0081]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x83: // 0x35 once and after 0x00 always // ioreg[c0083] // just apres le ioreg[83]=0 on a ppc R32 ioreg[114] et R32 ioreg[110] et apres ack irq5
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x85: // ioreg[c0085]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x87: // ioreg[c0087]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x88: // ioreg[c0088]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x89: // ioreg[c0089] // dayto2pe loops with values 00 01 02 during type 2 trame
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			//CommRAM[4] = d; /////////////////////////////////// pure hack for spikeout /////////////////////////////////////////////////////////////////////////////////////////////
 			if (Gameinfo.name.compare("spikeout") == 0 || Gameinfo.name.compare("spikeofe") == 0) CommRAM[4] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x8a: // ioreg[c008a]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		case 0x8b: // ioreg[c008b]
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			DebugLog("Netboard W8\tioreg[%x] <- %x\n", a & 0xff, d);
 			break;
 
 		default:
 			DebugLog("unknown c00(%x)\n", a & 0xff);
-			ioreg[a & 0xff] = d;
+			ioreg[(a & 0xff) ^ 1] = d;
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Info", "Unknown W8 IOREG", NULL);
 			break;
 
@@ -1163,9 +1095,7 @@ bool CNetBoard::Init(UINT8 * netRAMPtr, UINT8 *netBufferPtr)
 	netRAM = netRAMPtr;
 	netBuffer = netBufferPtr;
 
-	std::string netboard_present = Gameinfo.netboard_present;
-	std::transform(netboard_present.begin(), netboard_present.end(), netboard_present.begin(), ::tolower);
-	m_attached = (netboard_present.compare("true") == 0) ? true : false;
+	m_attached = Gameinfo.netboard_present && m_config["Network"].ValueAs<bool>();
 
 	test_irq = 0;
 
@@ -1227,18 +1157,18 @@ bool CNetBoard::Init(UINT8 * netRAMPtr, UINT8 *netBufferPtr)
 
 
 	//netsocks
-	port_in = m_config["port_in"].ValueAs<unsigned>();
-	port_out = m_config["port_out"].ValueAs<unsigned>();
-	addr_out = m_config["addr_out"].ValueAs<std::string>();
+	port_in = m_config["PortIn"].ValueAs<unsigned>();
+	port_out = m_config["PortOut"].ValueAs<unsigned>();
+	addr_out = m_config["AddressOut"].ValueAs<std::string>();
 
 	nets = std::make_unique<TCPSend>(addr_out, port_out);
 	netr = std::make_unique<TCPReceive>(port_in);
 
-	if (m_config["EmulateNet"].ValueAs<bool>() && m_attached) {
+	if (m_config["Network"].ValueAs<bool>() && m_attached) {
 		while (!nets->Connect()) {
-			DebugLog("Connecting to %s:%i ..\n", addr_out.c_str(), port_out);
+			printf("Connecting to %s:%i ..\n", addr_out.c_str(), port_out);
 		}
-		DebugLog("Successfully connected.\n");
+		printf("Successfully connected.\n");
 	}
 
 	return OKAY;
@@ -1257,7 +1187,6 @@ CNetBoard::CNetBoard(const Util::Config::Node &config) : m_config(config)
 	ioreg		= NULL;
 	ctrlrw		= NULL;
 
-	CodeReady	= false;
 	test_irq	= 0;
 
 	int5		= false;
@@ -1292,12 +1221,10 @@ void CNetBoard::LoadState(CBlockFile * SaveState)
 {
 }
 
-bool CNetBoard::RunFrame(void)
+void CNetBoard::RunFrame(void)
 {
-	if (!CodeReady)
-	{
-		return true;
-	}
+	if (!IsRunning())
+		return;
 
 	M68KSetContext(&M68K);
 
@@ -1337,8 +1264,6 @@ bool CNetBoard::RunFrame(void)
 	M68KRun((4000000 / 60));
 
 	M68KGetContext(&M68K);
-
-	return true;
 }
 
 void CNetBoard::Reset(void)
@@ -1377,6 +1302,11 @@ M68KCtx * CNetBoard::GetM68K(void)
 bool CNetBoard::IsAttached(void)
 {
 	return m_attached;
+}
+
+bool CNetBoard::IsRunning(void)
+{
+	return m_attached && ((ioreg[0xc0] == 0xff) || (ioreg[0xc0] == 0x01));
 }
 
 void CNetBoard::GetGame(Game gameinfo)
