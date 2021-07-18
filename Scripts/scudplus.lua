@@ -19,11 +19,11 @@ function Reset()
 end
 
 function Frame()
-	print("Frame=");
-	print(FrameId);
-	print(", ticks=");
-	print(Ticks);
-	print("\n");
+	-- print("Frame=");
+	-- print(FrameId);
+	-- print(", ticks=");
+	-- print(Ticks);
+	-- print("\n");
 	
 	local driveboard = PPC_Read8(0xfe040010)
 	local lamps = PPC_Read8(0xfe040014)
