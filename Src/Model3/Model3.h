@@ -29,9 +29,18 @@
 #ifndef INCLUDED_MODEL3_H
 #define INCLUDED_MODEL3_H
 
-#include "Model3/IEmulator.h"
-#include "Model3/JTAG.h"
-#include "Model3/Crypto.h"
+#include "53C810.h"
+#include "93C46.h"
+#include "Crypto.h"
+#include "IEmulator.h"
+#include "JTAG.h"
+#include "MPC10x.h"
+#include "Real3D.h"
+#include "RTC72421.h"
+#include "SoundBoard.h"
+#include "TileGen.h"
+#include "DriveBoard/DriveBoard.h"
+#include "CPU/PowerPC/ppc.h"
 #ifdef NET_BOARD
 #include "Network/INetBoard.h"
 #endif // NET_BOARD
@@ -256,8 +265,8 @@ private:
   UINT8   *backupRAM;   // 128 KB Backup RAM (battery backed)
   UINT8   *securityRAM; // 128 KB Security Board RAM
   UINT8   *driveROM;    // 32 KB drive board ROM (Z80 program) (optional)
-  UINT8   *netRAM;		// 128KB RAM
-  UINT8	  *netBuffer;	// 128KB buffer
+  UINT8   *netRAM;		// 64 KB RAM
+  UINT8	  *netBuffer;	// 128 KB buffer
   UINT8   OutputRegister[2];   // Input/output register for driveboard and lamps
 
   // Banked CROM

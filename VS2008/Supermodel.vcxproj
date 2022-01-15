@@ -374,6 +374,7 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
     <ClCompile Include="..\Src\Network\SimNetBoard.cpp" />
     <ClCompile Include="..\Src\Network\TCPReceive.cpp" />
     <ClCompile Include="..\Src\Network\TCPSend.cpp" />
+    <ClCompile Include="..\Src\Network\TCPSendAsync.cpp" />
     <ClCompile Include="..\Src\Network\UDPReceive.cpp" />
     <ClCompile Include="..\Src\Network\UDPSend.cpp" />
     <ClCompile Include="..\Src\Network\WinSockWrap.cpp" />

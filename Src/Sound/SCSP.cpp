@@ -63,13 +63,18 @@ It doesn't sound good at all.
 Anyways credit to R. Belmont and ElSemi for the code, and for being awesome emulation Gods.
 */
 
+#include "SCSP.h"
+
 #include "Supermodel.h"
-#include "Sound/SCSP.h"
+#include "SCSPDSP.h"
+#include "OSD/Thread.h"
+
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
-#include "Sound/SCSPDSP.h"
+
 
 static const Util::Config::Node *s_config = 0;
 static bool s_multiThreaded = false;
@@ -129,7 +134,7 @@ static DWORD IrqMidi;
 unsigned short MCIEB;
 unsigned short MCIPD;
 
-#define MIDI_STACK_SIZE			128
+#define MIDI_STACK_SIZE			0x100
 #define MIDI_STACK_SIZE_MASK	(MIDI_STACK_SIZE-1)
 
 static BYTE MidiOutStack[16];

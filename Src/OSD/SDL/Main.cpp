@@ -70,6 +70,12 @@
 #include "NetOutputs.h"
 #endif
 #include "SDLIncludes.h"
+#include "Debugger/SupermodelDebugger.h"
+#include "Graphics/Legacy3D/Legacy3D.h"
+#include "Graphics/New3D/New3D.h"
+#include "Model3/IEmulator.h"
+#include "Model3/Model3.h"
+#include "OSD/Audio.h"
 #include "Scripting/LuaEngine.h"
 
 #include <iostream>

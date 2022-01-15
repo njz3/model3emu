@@ -64,7 +64,7 @@
 // Network=1
 // PortIn = 1970
 // PortOut = 1971
-// addr_out = "127.0.0.1"
+// AddressOut = "127.0.0.1"
 //
 // add for slave
 // Network=1
@@ -78,19 +78,19 @@
 // Network=1
 // PortIn = 1970
 // PortOut = 1971
-// addr_out = "127.0.0.1"
+// AddressOut = "127.0.0.1"
 //
 // add for slave1
 // Network=1
 // PortIn = 1971
 // PortOut = 1972
-// addr_out = "127.0.0.1"
+// AddressOut = "127.0.0.1"
 //
 // add for slave2
 // Network=1
 // PortIn = 1972
 // PortOut = 1970
-// addr_out = "127.0.0.1"
+// AddressOut = "127.0.0.1"
 
 //#define NET_DEBUG
 
@@ -1306,7 +1306,7 @@ bool CNetBoard::IsAttached(void)
 
 bool CNetBoard::IsRunning(void)
 {
-	return m_attached && ((ioreg[0xc0] == 0xff) || (ioreg[0xc0] == 0x01));
+	return m_attached && (ioreg[0xc0] != 0);
 }
 
 void CNetBoard::GetGame(Game gameinfo)
@@ -1314,3 +1314,48 @@ void CNetBoard::GetGame(Game gameinfo)
 	Gameinfo = gameinfo;
 }
 
+UINT8 CNetBoard::ReadCommRAM8(unsigned addr)
+{
+	return CommRAM[addr];
+}
+
+UINT16 CNetBoard::ReadCommRAM16(unsigned addr)
+{
+	return *(UINT16*)&CommRAM[addr];
+}
+
+UINT32 CNetBoard::ReadCommRAM32(unsigned addr)
+{
+	return *(UINT32*)&CommRAM[addr];
+}
+
+void CNetBoard::WriteCommRAM8(unsigned addr, UINT8 data)
+{
+	CommRAM[addr] = data;
+}
+
+void CNetBoard::WriteCommRAM16(unsigned addr, UINT16 data)
+{
+	*(UINT16*)&CommRAM[addr] = data;
+}
+
+void CNetBoard::WriteCommRAM32(unsigned addr, UINT32 data)
+{
+	*(UINT32*)&CommRAM[addr] = data;
+}
+
+UINT16 CNetBoard::ReadIORegister(unsigned reg)
+{
+	if (!IsRunning())
+		return 0;
+
+	return *(UINT16*)&ioreg[reg];
+}
+
+void CNetBoard::WriteIORegister(unsigned reg, UINT16 data)
+{
+	if (reg == 0xc0 && !(data != 0 && IsRunning()))
+		Reset();	// don't reset if we are activating the netboard but it is already activated
+
+	*(UINT16*)&ioreg[reg] = data;
+}

@@ -28,6 +28,10 @@
 #ifndef INCLUDED_53C810_H
 #define INCLUDED_53C810_H
 
+#include "IRQ.h"
+#include "PCI.h"
+#include "BlockFile.h"
+#include "CPU/Bus.h"
 
 /*
  * struct NCR53C810Context:
@@ -48,6 +52,7 @@ struct NCR53C810Context
 	UINT8	regDCNTL;	// DCNTL: DMA Control
 	UINT8	regDMODE;	// DMODE: DMA Mode
 	UINT8	regDSTAT;	// DSTAT: DMA Status (read only)
+	UINT8	regDIEN;	// DIEN: DMA Interrupt Enable
 	UINT8	regISTAT;	// ISTAT: Interrupt Status
 	
 	// Operational status

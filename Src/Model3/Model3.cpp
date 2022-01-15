@@ -210,17 +210,25 @@
  *
  */
 
+#include "Model3.h"
+
 #include <new>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include "Supermodel.h"
+#include "DriveBoard/BillBoard.h"
+#include "DriveBoard/JoystickBoard.h"
+#include "DriveBoard/SkiBoard.h"
+#include "DriveBoard/WheelBoard.h"
 #include "Game.h"
 #include "ROMSet.h"
 #ifdef NET_BOARD
 #include "Network/NetBoard.h"
 #include "Network/SimNetBoard.h"
 #endif // NET_BOARD
+#include "OSD/Audio.h"
+#include "OSD/Video.h"
 #include "Util/Format.h"
 #include "Util/ByteSwap.h"
 #include <functional>
@@ -840,13 +848,8 @@ void CModel3::WritePCIConfigSpace(unsigned device, unsigned reg, unsigned bits, 
 /******************************************************************************
  Model 3 System Registers
 
- NOTE: Proper IRQ handling requires a "deassert" function in the PowerPC core,
- which the interpreter presently lacks. This is because different modules that
- generate IRQs, like the tilegen, Real3D, and SCSP, should each call
- IRQ.Assert() on their own, which will assert the CPU IRQ line. Right now,
- the CPU processes an interrupt and clears the line by itself, which means that
- if multiple interrupts are asserted simultaneously, depending on the IRQ
- handler code, only one may be processed. Keep an eye on this!
+ NOTE: Different modules that generate IRQs, like the tilegen, Real3D, and
+ SCSP, should each call IRQ.Assert() on their own.
 ******************************************************************************/
 
 // Set the CROM bank index (active low logic)
@@ -1019,8 +1022,7 @@ UINT8 CModel3::Read8(UINT32 addr)
     switch ((addr & 0x3ffff) >> 16)
     {
     case 0:
-      //printf("R8 netbuffer @%x=%x\n", (addr & 0xFFFF), netBuffer[(addr & 0xFFFF)]);
-      return netBuffer[(addr & 0xFFFF) ^ 2];
+      return NetBoard->ReadCommRAM8((addr & 0xFFFF) ^ 2);
 
     case 1: // ioreg 32bits access in 16bits environment
       if (addr > 0xc00101ff)
@@ -1028,21 +1030,11 @@ UINT8 CModel3::Read8(UINT32 addr)
         printf("R8 ATTENTION OUT OF RANGE\n");
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Info", "Out of Range", NULL);
       }
-      //printf("R8 ioreg @%x=%x\n", (addr & 0x1FF), netBuffer[0x10000 + ((addr & 0x1FF) / 2)]);
-      return netBuffer[0x10000 + ((addr & 0x1FF) / 2)];
+      return (UINT8)NetBoard->ReadIORegister((addr & 0x1FF) / 2);
 
     case 2:
     case 3:
-      if (addr > 0xc002ffff)
-      {
-        printf("R8 ATTENTION OUT OF RANGE\n");
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Info", "Out of Range", NULL);
-      }
-      //printf("R8 netram @%x=%x\n", (addr & 0x1FFFF), netRAM[addr & 0x1ffff]);
       return netRAM[((addr & 0x1FFFF) / 2)];
-    /*case 3:
-      //printf("R8 netram @%x=%x\n", (addr & 0x1FFFF), netRAM[addr & 0x1ffff]);
-      return netRAM[((addr & 0x1FFFF) / 2)];*/
 
     default:
       printf("R8 ATTENTION OUT OF RANGE\n");
@@ -1159,8 +1151,7 @@ UINT16 CModel3::Read16(UINT32 addr)
     switch ((addr & 0x3ffff) >> 16)
     {
     case 0:
-      //printf("R16 netbuffer @%x=%x\n", (addr & 0xFFFF), FLIPENDIAN16(*(UINT16 *)&netBuffer[(addr & 0xFFFF)]));
-      result = *(UINT16 *)&netBuffer[(addr & 0xFFFF) ^ 2];
+      result = NetBoard->ReadCommRAM16((addr & 0xFFFF) ^ 2);
       return FLIPENDIAN16(result); // result
     default:
       printf("CMODEL3 : unknown R16 : %x (C0)\n", addr);
@@ -1324,43 +1315,23 @@ UINT32 CModel3::Read32(UINT32 addr)
       switch ((addr & 0x3ffff) >> 16)
       {
       case 0:
-        //printf("R32 netbuffer @%x=%x\n", (addr & 0xFFFF), FLIPENDIAN32(*(UINT32 *)&netBuffer[(addr & 0xFFFF)]));
-        result = *(UINT32 *)&netBuffer[(addr & 0xFFFF)];
+        result = NetBoard->ReadCommRAM32(addr & 0xFFFF);
         result = FLIPENDIAN32(result);
         return ((result << 16) | (result >> 16));
-        //return FLIPENDIAN32(result); // result
 
       case 1: // ioreg 32bits access to 16bits range
-        //printf("R32 ioreg @%x=%x\n", (addr & 0x1FF), FLIPENDIAN32(*(UINT32 *)&netBuffer[0x10000 + ((addr & 0x1FF) / 2)]));
         if (addr > 0xc00101ff)
         {
           printf("R32 ATTENTION OUT OF RANGE\n");
         }
 
-        UINT32 test;
-        test = (*(UINT32 *)&netBuffer[0x10000 + ((addr & 0x1FF) / 2)]);
-        /*if (((FLIPENDIAN32(test) & 0x00ff0000) != 0x00900000) && ((FLIPENDIAN32(test) & 0x00ff0000) != 0x00a00000) && ((FLIPENDIAN32(test) & 0x00ff0000) != 0x00b00000) && ((FLIPENDIAN32(test) & 0x00ff0000) != 0x00800000) && ((FLIPENDIAN32(test) & 0x00ff0000) != 0x00f00000))
-        {
-          printf("R32 ioreg @%x=%04x\n", (addr), FLIPENDIAN32(test) >> 16);
-        }*/
-        result = (*(UINT32 *)&netBuffer[0x10000 + ((addr & 0x1FF) / 2)]) & 0x0000ffff;
+        result = NetBoard->ReadIORegister((addr & 0x1FF) / 2);
         return FLIPENDIAN32(result);
 
       case 2:
       case 3:
-        //printf("R32 netram @%x=%x\n", (addr & 0x1FFFF), FLIPENDIAN32(*(UINT32 *)&netBuffer[(addr & 0x1FFFF)]));
-
-        if (addr > 0xc002ffff)
-        {
-          printf("R32 ATTENTION OUT OF RANGE\n");
-        }
-
         result = (*(UINT32 *)&netRAM[((addr & 0x1FFFF) / 2)]) & 0x0000ffff;
         return FLIPENDIAN32(result); // result
-      /*case 3:
-        //printf("R32 netram @%x=%x\n", (addr & 0x1FFFF), FLIPENDIAN32(*(UINT32 *)&netBuffer[(addr & 0x1FFFF)]));
-        result = (*(UINT32 *)&netRAM[((addr & 0x1FFFF) / 2)]) & 0x0000ffff;
-        return FLIPENDIAN32(result); // result*/
 
       default:
         printf("R32 ATTENTION OUT OF RANGE\n");
@@ -1501,8 +1472,7 @@ void CModel3::Write8(UINT32 addr, UINT8 data)
       switch ((addr & 0x3ffff) >> 16)
       {
       case 0:
-        //printf("W8 netbuffer @%x<-%x\n", (addr & 0xFFFF), data);
-        *(UINT8 *)&netBuffer[(addr & 0xFFFF) ^ 2] = data;
+        NetBoard->WriteCommRAM8((addr & 0xFFFF) ^ 2, data);
         break;
 
       case 1: // ioreg 32bits access to 16bits range
@@ -1511,26 +1481,13 @@ void CModel3::Write8(UINT32 addr, UINT8 data)
           printf("W8 ATTENTION OUT OF RANGE\n");
         }
 
-        //printf("W8 ioreg @%x<-%x\n", (addr & 0x1FF), data);
-        if (((addr & 0x1FF) == 0x180) && (data == 0x00))
-            NetBoard->Reset();
-        *(UINT8 *)&netBuffer[0x10000 + ((addr & 0x1FF) / 2)] = data;
+        NetBoard->WriteIORegister((addr & 0x1FF) / 2, data);
         break;
 
       case 2:
       case 3:
-        if (addr > 0xc002ffff)
-        {
-          printf("W8 ATTENTION OUT OF RANGE\n");
-        }
-
-        //printf("W8 netram @%x<-%x\n", (addr & 0x1FFFF), data);
         *(UINT8 *)&netRAM[(addr & 0x1FFFF)/2] = data;
         break;
-      /*case 3:
-        //printf("W8 netram @%x<-%x\n", (addr & 0x1FFFF), data);
-        *(UINT8 *)&netRAM[(addr & 0x1FFFF) / 2] = data;
-        break;*/
 
       default:
         printf("W8 ATTENTION OUT OF RANGE\n");
@@ -1631,8 +1588,7 @@ void CModel3::Write16(UINT32 addr, UINT16 data)
     switch ((addr & 0x3ffff) >> 16)
     {
     case 0:
-      //printf("W16 netbuffer @%x<-%x\n", (addr & 0xFFFF), data);
-      *(UINT16 *)&netBuffer[(addr & 0xFFFF) ^ 2] = FLIPENDIAN16(data);
+      NetBoard->WriteCommRAM16((addr & 0xFFFF) ^ 2, FLIPENDIAN16(data));
       break;
 
     default:
@@ -1837,10 +1793,8 @@ void CModel3::Write32(UINT32 addr, UINT32 data)
       switch ((addr & 0x3ffff) >> 16)
       {
       case 0:
-        //printf("W32 netbuffer @%x<-%x\n", (addr & 0xFFFF), data);
-        //*(UINT32 *)&netBuffer[(addr & 0xFFFF)] = FLIPENDIAN32(data);
         temp = FLIPENDIAN32(data);
-        *(UINT32 *)&netBuffer[(addr & 0xFFFF)] = (temp << 16) | (temp >> 16);
+        NetBoard->WriteCommRAM32(addr & 0xFFFF, (temp << 16) | (temp >> 16));
         break;
 
       case 1: // ioreg 32bits access to 16bits range
@@ -1849,26 +1803,14 @@ void CModel3::Write32(UINT32 addr, UINT32 data)
           printf("W32 ATTENTION OUT OF RANGE\n");
         }
 
-        //printf("W32 ioreg @%x<-%04x\n", (addr /*& 0x1FF*/), data>>16);
-        if (((addr & 0x1FF) == 0x180) && ((data >> 16) == 0x0000))
-            NetBoard->Reset();
-        *(UINT16 *)&netBuffer[0x10000 + ((addr & 0x1FF) / 2)] = FLIPENDIAN16(data >> 16);
+        NetBoard->WriteIORegister((addr & 0x1FF) / 2, FLIPENDIAN16(data >> 16));
         break;
 
       case 2:
       case 3:
-        if (addr > 0xc002ffff)
-        {
-          printf("W32 ATTENTION OUT OF RANGE\n");
-        }
-
-        //printf("W32 netram @%x<-%x\n", (addr & 0x1FFFF), data);
         *(UINT16 *)&netRAM[((addr & 0x1FFFF) / 2)] = FLIPENDIAN16(data >> 16);
         break;
-      /*case 3:
-        //printf("W32 netram @%x<-%x\n", (addr & 0x1FFFF), data);
-        *(UINT16 *)&netRAM[((addr & 0x1FFFF) / 2)] = FLIPENDIAN16(data >> 16);
-        break;*/
+
       default:
         printf("W32 ATTENTION OUT OF RANGE\n");
         break;
@@ -2064,16 +2006,7 @@ void CModel3::RunFrame(void)
 
 #ifdef NET_BOARD
     if (NetBoard->IsRunning() && m_config["SimulateNet"].ValueAs<bool>())
-    {
-        // ppc irq network needed ? no effect, is it really active/needed ?
-        IRQ.Assert(0x10);
-        ppc_execute(200); // give PowerPC time to acknowledge IRQ
-        IRQ.Deassert(0x10);
-        ppc_execute(200); // acknowledge that IRQ was deasserted (TODO: is this really needed?)
         RunNetBoardFrame();
-        // Hum hum, if runnetboardframe is called at 1st place or between ppc irq assert/deassert, spikout freezes just after the gate with net error
-        // if runnetboardframe is called after ppc irq assert/deassert, spikout works
-  }
 #endif
   }
   else
@@ -2087,16 +2020,7 @@ void CModel3::RunFrame(void)
       RunDriveBoardFrame();
 #ifdef NET_BOARD
     if (NetBoard->IsRunning())
-    {
-      // ppc irq network needed ? no effect, is it really active/needed ?
-      IRQ.Assert(0x10);
-      ppc_execute(200); // give PowerPC time to acknowledge IRQ
-      IRQ.Deassert(0x10);
-      ppc_execute(200); // acknowledge that IRQ was deasserted (TODO: is this really needed?)
       RunNetBoardFrame();
-      // Hum hum, if runnetboardframe is called at 1st place or between ppc irq assert/deassert, spikout freezes just after the gate with net error
-      // if runnetboardframe is called after ppc irq assert/deassert, spikout works
-    }
 #endif
   }
   ScriptEngine->EndFrame();
@@ -2958,7 +2882,6 @@ bool CModel3::LoadGame(const Game &game, const ROMSet &rom_set)
   rom_set.get_rom("mpeg_program").CopyTo(dsbROM, 128*1024);
   rom_set.get_rom("mpeg_music").CopyTo(mpegROM, 16*0x100000);
   rom_set.get_rom("driveboard_program").CopyTo(driveROM, 64*1024);
-  rom_set.get_rom("ffb_program").CopyTo(driveROM, 64 * 1024);
 
   // Convert PowerPC and 68K ROMs to little endian words
   Util::FlipEndian32(crom, 8*0x100000 + 128*0x100000);
@@ -3100,8 +3023,6 @@ bool CModel3::LoadGame(const Game &game, const ROMSet &rom_set)
     else
       extra_hw.insert("Drive Board");
   }
-  if (rom_set.get_rom("ffb_program").size)
-    extra_hw.insert("Joystick FFB Board");
   if (game.encryption_key)
     extra_hw.insert("Security Board");
   if (game.netboard_present)
@@ -3183,7 +3104,7 @@ const static int DSBPROGROM_SIZE	= 0x20000;		//128KB
 const static int DSBMPEGROM_SIZE	= 0x1000000;	//16MB
 const static int DRIVEROM_SIZE		= 0x10000;		//64KB
 const static int NETBUFFER_SIZE		= 0x20000;		//128KB
-const static int NETRAM_SIZE		= 0x20000;		//128KB
+const static int NETRAM_SIZE		= 0x10000;		//64KB
 
 const static int MEM_POOL_SIZE		= RAM_SIZE + CROM_SIZE +
                                         CROMxx_SIZE + VROM_SIZE +
