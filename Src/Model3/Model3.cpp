@@ -3293,7 +3293,8 @@ CModel3::~CModel3(void)
   //Dump("soundROM", soundROM, 0x80000, false, true);
   //Dump("sampleROM", sampleROM, 0x800000, false, true);
   
-  ScriptEngine->End();
+  if (ScriptEngine)
+      ScriptEngine->End();
 
   // Stop all threads
   StopThreads();

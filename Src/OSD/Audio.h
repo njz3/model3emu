@@ -29,6 +29,7 @@
 #define INCLUDED_AUDIO_H
 
 #include "Types.h"
+#include "Util/NewConfig.h"
 
 typedef void (*AudioCallbackFPtr)(void *data);
 
@@ -41,7 +42,7 @@ extern void SetAudioEnabled(bool enabled);
  *
  * Initializes the audio system.
  */
-extern bool OpenAudio();
+extern bool OpenAudio(const Util::Config::Node& config);
 
 /*
  * OutputAudio(unsigned numSamples, *INT16 leftBuffer, *INT16 rightBuffer)

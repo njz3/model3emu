@@ -455,7 +455,7 @@ void CSoundBoard::AttachDSB(CDSB *DSBPtr)
 #define OFFSET_AUDIO_REARLEFT	(OFFSET_AUDIO_FRONTRIGHT + LENGTH_CHANNEL_BUFFER)    // 1470 bytes (16 bits, 44.1 KHz, 1/60th second) left audio channel
 #define OFFSET_AUDIO_REARRIGHT	(OFFSET_AUDIO_REARLEFT + LENGTH_CHANNEL_BUFFER)	// 1470 bytes right audio channel
 
-#define MEMORY_POOL_SIZE	(0x100000 + 0x100000 + 0x5BE + 0x5BE + 2*0x5BE)
+#define MEMORY_POOL_SIZE	(0x100000 + 0x100000 + 2*0x5BE + 2*0x5BE)
 
 bool CSoundBoard::Init(const UINT8 *soundROMPtr, const UINT8 *sampleROMPtr)
 {

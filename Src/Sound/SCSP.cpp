@@ -1569,7 +1569,7 @@ void SCSP_DoMasterSamples(int nsamples)
 
 	buffl = bufferfl;
 	buffr = bufferfr;
-	bufrl = bufferrr;
+	bufrl = bufferrl;
 	bufrr = bufferrr;
 
 	/*
@@ -1577,7 +1577,8 @@ void SCSP_DoMasterSamples(int nsamples)
 	 */
 	for (s = 0; s < nsamples; ++s)
 	{
-		signed int smpl = 0, smpr = 0;
+		signed int smpfl = 0, smpfr = 0;
+		signed int smprl = 0, smprr = 0;
 
 		for (sl = 0; sl < 32; ++sl)
 		{
@@ -1599,12 +1600,12 @@ void SCSP_DoMasterSamples(int nsamples)
 				SCSPDSP_SetSample(&SCSPs[0].DSP, (sample*LPANTABLE[Enc]) >> (SHIFT - 2), ISEL(slot), IMXL(slot));
 				Enc = ((TL(slot)) << 0x0) | ((DIPAN(slot)) << 0x8) | ((DISDL(slot)) << 0xd);
 #ifdef RB_VOLUME
-				smpl += (sample * volume[TL(slot) + pan_left[DIPAN(slot)]]) >> 17;
-				smpr += (sample * volume[TL(slot) + pan_right[DIPAN(slot)]]) >> 17;
+				smpfl += (sample * volume[TL(slot) + pan_left[DIPAN(slot)]]) >> 17;
+				smpfr += (sample * volume[TL(slot) + pan_right[DIPAN(slot)]]) >> 17;
 #else				
 				{
-					smpl += (sample*LPANTABLE[Enc]) >> SHIFT;
-					smpr += (sample*RPANTABLE[Enc]) >> SHIFT;
+					smpfl += (sample*LPANTABLE[Enc]) >> SHIFT;
+					smpfr += (sample*RPANTABLE[Enc]) >> SHIFT;
 				}
 #endif
 			}
@@ -1636,11 +1637,11 @@ void SCSP_DoMasterSamples(int nsamples)
 					Enc = ((TL(slot)) << 0x0) | ((DIPAN(slot)) << 0x8) | ((DISDL(slot)) << 0xd);
 					{
 #ifdef RB_VOLUME
-						smpl += (sample * volume[TL(slot) + pan_left[DIPAN(slot)]]) >> 17;
-						smpr += (sample * volume[TL(slot) + pan_right[DIPAN(slot)]]) >> 17;
+						smprl += (sample * volume[TL(slot) + pan_left[DIPAN(slot)]]) >> 17;
+						smprr += (sample * volume[TL(slot) + pan_right[DIPAN(slot)]]) >> 17;
 #else				
-						smpl += (sample*LPANTABLE[Enc]) >> SHIFT;
-						smpr += (sample*RPANTABLE[Enc]) >> SHIFT;
+						smprl += (sample*LPANTABLE[Enc]) >> SHIFT;
+						smprr += (sample*RPANTABLE[Enc]) >> SHIFT;
 					}
 #endif
 				}
@@ -1671,8 +1672,8 @@ void SCSP_DoMasterSamples(int nsamples)
 				{
 					// For legacy option, 14 is the most reasonable value I can set at the moment for the EFSDL slot. - Paul
 					UINT16 Enc = ((EFPAN(slot)) << 0x8) | ((EFSDL(slot)) << 0xe);
-					smpl += (int)(masterBalance*(float)(((SCSPs[0].DSP.EFREG[i] * LPANTABLE[Enc]) >> SHIFT)));
-					smpr += (int)(masterBalance*(float)(((SCSPs[0].DSP.EFREG[i] * RPANTABLE[Enc]) >> SHIFT)));
+					smpfl += (int)(masterBalance*(float)(((SCSPs[0].DSP.EFREG[i] * LPANTABLE[Enc]) >> SHIFT)));
+					smpfr += (int)(masterBalance*(float)(((SCSPs[0].DSP.EFREG[i] * RPANTABLE[Enc]) >> SHIFT)));
 				}
 				if (HasSlaveSCSP)
 				{
@@ -1680,8 +1681,8 @@ void SCSP_DoMasterSamples(int nsamples)
 					if (EFSDL(slot))
 					{
 						UINT16 Enc = ((EFPAN(slot)) << 0x8) | ((EFSDL(slot)) << 0xe);
-						smpl += (int)(slaveBalance*(float)(((SCSPs[1].DSP.EFREG[i] * LPANTABLE[Enc]) >> SHIFT)));
-						smpr += (int)(slaveBalance*(float)(((SCSPs[1].DSP.EFREG[i] * RPANTABLE[Enc]) >> SHIFT)));
+						smprl += (int)(slaveBalance*(float)(((SCSPs[1].DSP.EFREG[i] * LPANTABLE[Enc]) >> SHIFT)));
+						smprr += (int)(slaveBalance*(float)(((SCSPs[1].DSP.EFREG[i] * RPANTABLE[Enc]) >> SHIFT)));
 					}
 				}
 			}
@@ -1689,8 +1690,8 @@ void SCSP_DoMasterSamples(int nsamples)
 				if (EFSDL(slot))
 				{
 					UINT16 Enc = ((EFPAN(slot)) << 0x8) | ((EFSDL(slot)) << 0xd);
-					smpl += (int)(masterBalance*(float)(((SCSPs[0].DSP.EFREG[i] * LPANTABLE[Enc]) >> SHIFT)));
-					smpr += (int)(masterBalance*(float)(((SCSPs[0].DSP.EFREG[i] * RPANTABLE[Enc]) >> SHIFT)));
+					smpfl += (int)(masterBalance*(float)(((SCSPs[0].DSP.EFREG[i] * LPANTABLE[Enc]) >> SHIFT)));
+					smpfr += (int)(masterBalance*(float)(((SCSPs[0].DSP.EFREG[i] * RPANTABLE[Enc]) >> SHIFT)));
 				}
 				if (HasSlaveSCSP)
 				{
@@ -1698,8 +1699,8 @@ void SCSP_DoMasterSamples(int nsamples)
 					if (EFSDL(slot))
 					{
 						UINT16 Enc = ((EFPAN(slot)) << 0x8) | ((EFSDL(slot)) << 0xd);
-						smpl += (int)(slaveBalance*(float)(((SCSPs[1].DSP.EFREG[i] * LPANTABLE[Enc]) >> SHIFT)));
-						smpr += (int)(slaveBalance*(float)(((SCSPs[1].DSP.EFREG[i] * RPANTABLE[Enc]) >> SHIFT)));
+						smprl += (int)(slaveBalance*(float)(((SCSPs[1].DSP.EFREG[i] * LPANTABLE[Enc]) >> SHIFT)));
+						smprr += (int)(slaveBalance*(float)(((SCSPs[1].DSP.EFREG[i] * RPANTABLE[Enc]) >> SHIFT)));
 					}
 				}
 			}
@@ -1707,16 +1708,26 @@ void SCSP_DoMasterSamples(int nsamples)
 
 		if (DAC18B(SCSP))
 		{
-			smpl = ICLIP18(smpl);
-			smpr = ICLIP18(smpr);
+			smpfl = ICLIP18(smpfl);
+			smpfr = ICLIP18(smpfr);
 		}
 		else
 		{
-			smpl = ICLIP16(smpl >> 2);
-			smpr = ICLIP16(smpr >> 2);
+			smpfl = ICLIP16(smpfl >> 2);
+			smpfr = ICLIP16(smpfr >> 2);
 		}
-		*buffl++ = ICLIP16(smpl);
-		*buffr++ = ICLIP16(smpr);
+		*buffl++ = ICLIP16(smpfl);
+		*buffr++ = ICLIP16(smpfr);
+
+		if (DAC18B((&SCSP[1]))) {
+			smprl = ICLIP18(smprl);
+			smprr = ICLIP18(smprr);
+		} else {
+			smprl = ICLIP16(smprl >> 2);
+			smprr = ICLIP16(smprr >> 2);
+		}
+		*bufrl++ = ICLIP16(smprl);
+		*bufrr++ = ICLIP16(smprr);
 
 
 		SCSP_TimersAddTicks(1);

@@ -882,7 +882,7 @@ int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *In
   PrintGLInfo(false, true, false);
 
   // Initialize audio system
-  if (OKAY != OpenAudio())
+  if (OKAY != OpenAudio(s_runtime_config))
     return 1;
 
   // Hide mouse if fullscreen, enable crosshairs for gun games
@@ -1402,7 +1402,10 @@ static Util::Config::Node DefaultConfig()
   // CSoundBoard
   config.Set("EmulateSound", true);
   config.Set("Balance", "0");
-  config.Set("SoundFreq", 57.5); // 60.0?
+  config.Set("BalanceLeftRight", "0");
+  config.Set("BalanceFrontRear", "0");
+  config.Set("NbSoundChannels", "4");
+  config.Set("SoundFreq", 57.6); // 60.0? 57.524160f?
   // CDSB
   config.Set("EmulateDSB", true);
   config.Set("SoundVolume", "100");
@@ -1525,6 +1528,7 @@ static void Help(void)
   puts("                          when Digital Sound Board is present [Default: 100]");
   puts("  -music-volume=<vol>     Digital Sound Board volume in % [Default: 100]");
   puts("  -balance=<bal>          Relative front/rear balance in % [Default: 0]");
+  puts("  -channels=<c>           Number of sound channels to use on host [Default: 4]");
   puts("  -flip-stereo            Swap left and right audio channels");
   puts("  -no-sound               Disable sound board emulation (sound effects)");
   puts("  -no-dsb                 Disable Digital Sound Board (MPEG music)");
@@ -1600,6 +1604,7 @@ static ParsedCommandLine ParseCommandLine(int argc, char **argv)
     { "-sound-volume",          "SoundVolume"             },
     { "-music-volume",          "MusicVolume"             },
     { "-balance",               "Balance"                 },
+    { "-channels", 	            "NbSoundChannels"         },
     { "-soundfreq",             "SoundFreq"               },
     { "-input-system",          "InputSystem"             },
     { "-outputs",               "Outputs"                 },
