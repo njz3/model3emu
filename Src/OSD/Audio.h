@@ -48,7 +48,7 @@ extern bool OpenAudio();
  *
  * Sends a chunk of two-channel audio with the given number of samples to the audio system.
  */
-extern bool OutputAudio(unsigned numSamples, INT16 *leftBuffer, INT16 *rightBuffer, bool flipStereo);
+extern bool OutputAudio(unsigned numSamples, INT16* leftFrontBuffer, INT16* rightFrontBuffer, INT16* leftRearBuffer, INT16* rightRearBuffer, bool flipStereo);
 
 /*
  * CloseAudio()

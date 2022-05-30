@@ -89,12 +89,15 @@ bool legacySound; // For LegacySound (SCSP DSP) config option.
 // These globals control the operation of the SCSP, they are no longer extern and are set through SCSP_SetBuffers(). --Bart
 float SoundClock; // Originally titled SysFPS; seems to be for the sound CPU.
 const float Freq = 76;
-signed short *bufferl;		
-signed short *bufferr;
+signed short* bufferfl;
+signed short* bufferfr;
+signed short* bufferrl;
+signed short* bufferrr;
 int length;
 int cnts;
 
-signed int *buffertmpl,*buffertmpr;	// these are allocated inside this file
+signed int* buffertmpfl, * buffertmpfr;	// these are allocated inside this file
+signed int* buffertmprl, * buffertmprr;	// these are allocated inside this file
 
 unsigned int srate=44100;
 
@@ -759,19 +762,32 @@ bool SCSP_Init(const Util::Config::Node &config, int n)
 #endif
 
 	LFO_Init();
-	buffertmpl = NULL;
-	buffertmpr = NULL;
-	buffertmpl=(signed int*) malloc(44100*sizeof(signed int));
-	if (NULL == buffertmpl)
+	buffertmpfl = NULL;
+	buffertmpfr = NULL;
+	buffertmprl = NULL;
+	buffertmprr = NULL;
+	buffertmpfl=(signed int*) malloc(44100*sizeof(signed int));
+	if (NULL == buffertmpfl)
 		return ErrorLog("Insufficient memory for internal SCSP buffers.");
-	buffertmpr=(signed int*) malloc(44100*sizeof(signed int));
-	if (NULL == buffertmpl)
+	buffertmpfr=(signed int*) malloc(44100*sizeof(signed int));
+	if (NULL == buffertmpfr)
 	{
-		free(buffertmpl);
+		free(buffertmpfr);
 		return ErrorLog("Insufficient memory for internal SCSP buffers.");
 	}
-	memset(buffertmpl,0,44100*sizeof(signed int));
-	memset(buffertmpr,0,44100*sizeof(signed int));
+
+	buffertmprl=(signed int*)malloc(44100*sizeof(signed int));
+	if (NULL == buffertmprl)
+		return ErrorLog("Insufficient memory for internal SCSP buffers.");
+	buffertmprr=(signed int*)malloc(44100*sizeof(signed int));
+	if (NULL == buffertmprr)
+		return ErrorLog("Insufficient memory for internal SCSP buffers.");
+
+
+	memset(buffertmpfl, 0, 44100*sizeof(signed int));
+	memset(buffertmpfr, 0, 44100*sizeof(signed int));
+	memset(buffertmprl, 0, 44100*sizeof(signed int));
+	memset(buffertmprr, 0, 44100*sizeof(signed int));
 	SCSPs->data[0x20 / 2] = 0;
 	TimCnt[0] = 0xffff;
 	TimCnt[1] = 0xffff;
@@ -781,8 +797,10 @@ bool SCSP_Init(const Util::Config::Node &config, int n)
 	MIDILock = CThread::CreateMutex();
 	if (NULL == MIDILock)
 	{
-		free(buffertmpl);
-		free(buffertmpr);
+		free(buffertmpfl);
+		free(buffertmpfr);
+		free(buffertmprl);
+		free(buffertmprr);
 		return ErrorLog("Unable to create MIDI mutex!");
 	}
 	
@@ -1544,12 +1562,15 @@ void SCSP_DoMasterSamples(int nsamples)
 	balance /= 100.0f;
 	float masterBalance = 1.0f + balance;
 	float slaveBalance = 1.0f - balance;
-	signed short *bufl, *bufr;
+	signed short* buffl, * buffr;
+	signed short* bufrl, * bufrr;
 
 	INT32 sl, s, i;
 
-	bufl = bufferl;
-	bufr = bufferr;
+	buffl = bufferfl;
+	buffr = bufferfr;
+	bufrl = bufferrr;
+	bufrr = bufferrr;
 
 	/*
 	 * Generate samples
@@ -1694,8 +1715,8 @@ void SCSP_DoMasterSamples(int nsamples)
 			smpl = ICLIP16(smpl >> 2);
 			smpr = ICLIP16(smpr >> 2);
 		}
-		*bufl++ = ICLIP16(smpl);
-		*bufr++ = ICLIP16(smpr);
+		*buffl++ = ICLIP16(smpl);
+		*buffr++ = ICLIP16(smpr);
 
 
 		SCSP_TimersAddTicks(1);
@@ -2107,11 +2128,14 @@ void SCSP_LoadState(CBlockFile *StateFile)
 	}
 }
 
-void SCSP_SetBuffers(INT16 *leftBufferPtr, INT16 *rightBufferPtr, int bufferLength)
+void SCSP_SetBuffers(INT16 *leftBufferPtr, INT16 *rightBufferPtr, INT16* leftRearBufferPtr, INT16* rightRearBufferPtr, int bufferLength)
 {
 	SoundClock = 76;
-	bufferl = leftBufferPtr;
-	bufferr = rightBufferPtr;
+	bufferfl = leftBufferPtr;
+	bufferfr = rightBufferPtr;
+	bufferrl = leftRearBufferPtr;
+	bufferrr = rightRearBufferPtr;
+
 	length = bufferLength;
 	cnts = 0;		// what is this for? seems unimportant but need to find out
 }
@@ -2121,10 +2145,12 @@ void SCSP_Deinit(void)
 #ifdef USEDSP
 	free(SCSP->MIXBuf);
 #endif
-	free(buffertmpl);
-	free(buffertmpr);
+	free(buffertmpfl);
+	free(buffertmpfr);
 	delete MIDILock;
-	buffertmpl = NULL;
-	buffertmpr = NULL;
+	buffertmpfl = NULL;
+	buffertmpfr = NULL;
+	buffertmprl = NULL;
+	buffertmprr = NULL;
 	MIDILock = NULL;
 }
