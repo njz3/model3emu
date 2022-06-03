@@ -358,7 +358,12 @@ bool CSoundBoard::RunFrame(void)
 	
 	// Run DSB and mix with existing audio
 	if (NULL != DSB) {
-		DSB->RunFrame(audioFL, audioFR);
+		// Will need to mix with proper front or rear channels (game specific)
+		bool mixDSBWithFront = true; // Everything to front channels for now
+		if (mixDSBWithFront)
+			DSB->RunFrame(audioFL, audioFR);
+		else 
+			DSB->RunFrame(audioRL, audioRR);
 	}
 
 	// Output the audio buffers
