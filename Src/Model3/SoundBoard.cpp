@@ -358,11 +358,12 @@ bool CSoundBoard::RunFrame(void)
 	
 	// Run DSB and mix with existing audio
 	if (NULL != DSB) {
-		// Will need to mix with proper front or rear channels (game specific)
+		// Will need to mix with proper front, rear channels or both (game specific)
 		bool mixDSBWithFront = true; // Everything to front channels for now
+		// Case "both" not handled for now
 		if (mixDSBWithFront)
 			DSB->RunFrame(audioFL, audioFR);
-		else 
+		else
 			DSB->RunFrame(audioRL, audioRR);
 	}
 

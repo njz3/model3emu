@@ -882,6 +882,7 @@ int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *In
   PrintGLInfo(false, true, false);
 
   // Initialize audio system
+  SetAudioType(game.audio);
   if (OKAY != OpenAudio(s_runtime_config))
     return 1;
 
@@ -1405,7 +1406,7 @@ static Util::Config::Node DefaultConfig()
   config.Set("BalanceLeftRight", "0");
   config.Set("BalanceFrontRear", "0");
   config.Set("NbSoundChannels", "4");
-  config.Set("SoundFreq", (float)57.6); // 60.0f? 57.524160f?
+  config.Set("SoundFreq", "57.6"); // 60.0f? 57.524160f?
   // CDSB
   config.Set("EmulateDSB", true);
   config.Set("SoundVolume", "100");

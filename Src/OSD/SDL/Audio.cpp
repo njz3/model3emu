@@ -29,13 +29,27 @@
   * a sample is 4 bytes. Static assertions are employed to ensure that the
   * initial set up of the buffer is correct.
   *
-  * Model 3 Audio is always 4 channels (one SCSP for each front/rear output).
+  * Model 3 Audio is always 4 channels. SCSP1 is usually for each front
+  * channels (on CN7 connector) and SCSP2 for rear channels (on CN8).
   * The downmix to 2 channels will be performed here in case supermodel audio
   * subsystem does not allow such playback.
   * The default DSB board is supposed to be plug and mixed with the rear output
   * channel. This rear channel is usually plugged to the gullbow speakers that
-  * are present in all racing cabinets, while front speakers are only present
-  * in Daytona2, Scud Race, Sega Rally 2.
+  * are present in most model 3 racing cabinets, while front speakers are only
+  * present in Daytona2, Scud Race, Sega Rally 2.
+  * As each cabinet as its own wiring, with different mixing, the games.xml
+  * database will provide which can of mixing should be applied for each game.
+  *
+  * From twin uk cabinet diagrams, at least:
+  * - lemans24: only stereo on rear speakers (gullbox) on SCSP2/CN8.
+  * - scud race: DSB mixed with SCSP1/CN7 for rear speakers (gullbox), front
+  *   connected to SCSP2/CN8.
+  * - daytona2: rear on SCSP1/CN7, front on SCSP2/CN8
+  * - srally2: SCSP1/CN7 gives left/right, and SCSP/CN8 is split in 2 channels:
+  *   mono front, mono rear. These two channels are them mixed with L/R to give
+  *   the quad output.
+  * Others are unknown so far, but it is expected that most Step 2.x games should
+  * have quad output.
   */
 
 #include "Audio.h"
@@ -57,10 +71,11 @@
 
 #define NUM_CHANNELS_M3 (4)
 
+Game::AudioTypes AudioType;
 int nbHostAudioChannels = NUM_CHANNELS_M3;   // Number of channels on host
 
 #define SAMPLES_PER_FRAME_M3  (INT32)(SAMPLE_RATE_M3 / MODEL3_FPS)
- 
+
 #define BYTES_PER_SAMPLE_M3   (NUM_CHANNELS_M3 * sizeof(INT16))
 #define BYTES_PER_FRAME_M3   (SAMPLES_PER_FRAME_M3 * BYTES_PER_SAMPLE_M3)
 
@@ -110,6 +125,15 @@ void SetAudioCallback(AudioCallbackFPtr newCallback, void* newData)
     callbackData = newData;
 
     SDL_UnlockAudio();
+}
+
+/// <summary>
+/// Set game audio mixing type
+/// </summary>
+/// <param name="type"></param>
+void SetAudioType(Game::AudioTypes type)
+{
+    AudioType = type;
 }
 
 void SetAudioEnabled(bool newEnabled)
@@ -215,7 +239,6 @@ static void MixChannels(unsigned numSamples, INT16* leftFrontBuffer, INT16* righ
 {
     INT16* p = (INT16*)dest;
 
-
     if (nbHostAudioChannels == 1) {
         for (unsigned i = 0; i < numSamples; i++) {
             // TODO: these should probably be clipped!
@@ -224,38 +247,119 @@ static void MixChannels(unsigned numSamples, INT16* leftFrontBuffer, INT16* righ
             *p++ = monovalue;
         }
     } else {
-        if (flipStereo) // swap left and right channels
-        {
-            if (nbHostAudioChannels == 2) {
-                for (unsigned i = 0; i < numSamples; i++) {
-                    INT16 leftvalue = (INT16)(((INT32)(leftFrontBuffer[i]*balanceFactorFrontLeft) + (INT32)(leftRearBuffer[i]*balanceFactorRearLeft))>>1);
-                    INT16 rightvalue = (INT16)(((INT32)(rightFrontBuffer[i]*balanceFactorFrontRight) + (INT32)(rightRearBuffer[i]*balanceFactorRearRight))>>1);
+        // Flip again left/right if configured in audio
+        switch (AudioType) {
+        case Game::STEREO_RL:
+        case Game::QUAD_1_FRL_2_RRL:
+        case Game::QUAD_1_RRL_2_FRL:
+            flipStereo = !flipStereo;
+            break;
+        }
+
+        // Now order channels according to audio type
+        if (nbHostAudioChannels == 2) {
+            for (unsigned i = 0; i < numSamples; i++) {
+                INT16 leftvalue = (INT16)(((INT32)(leftFrontBuffer[i]*balanceFactorFrontLeft) + (INT32)(leftRearBuffer[i]*balanceFactorRearLeft))>>1);
+                INT16 rightvalue = (INT16)(((INT32)(rightFrontBuffer[i]*balanceFactorFrontRight) + (INT32)(rightRearBuffer[i]*balanceFactorRearRight))>>1);
+                if (flipStereo) // swap left and right channels
+                {
                     *p++ = rightvalue;
                     *p++ = leftvalue;
-                }
-            } else if (nbHostAudioChannels == 4) {
-                for (unsigned i = 0; i < numSamples; i++) {
-                    *p++ = rightFrontBuffer[i]*balanceFactorFrontRight;
-                    *p++ = leftFrontBuffer[i]*balanceFactorFrontLeft;
-                    *p++ = rightRearBuffer[i]*balanceFactorRearRight;
-                    *p++ = leftRearBuffer[i]*balanceFactorRearLeft;
+                } else {
+                    *p++ = leftvalue;
+                    *p++ = rightvalue;
                 }
             }
-        } else {
-            // correct stereo
-            if (nbHostAudioChannels == 2) {
-                for (unsigned i = 0; i < numSamples; i++) {
-                    INT16 leftvalue = (INT16)(((INT32)(leftFrontBuffer[i]*balanceFactorFrontLeft) + (INT32)(leftRearBuffer[i]*balanceFactorRearLeft))>>1);
-                    INT16 rightvalue = (INT16)(((INT32)(rightFrontBuffer[i]*balanceFactorFrontRight) + (INT32)(rightRearBuffer[i]*balanceFactorRearRight))>>1);
-                    *p++ = leftvalue;
-                    *p++ = rightvalue;
-                }
-            } else if (nbHostAudioChannels == 4) {
-                for (unsigned i = 0; i < numSamples; i++) {
-                    *p++ = leftFrontBuffer[i]*balanceFactorFrontLeft;
-                    *p++ = rightFrontBuffer[i]*balanceFactorFrontRight;
-                    *p++ = leftRearBuffer[i]*balanceFactorRearLeft;
-                    *p++ = rightRearBuffer[i]*balanceFactorRearRight;
+        } else if (nbHostAudioChannels == 4) {
+            for (unsigned i = 0; i < numSamples; i++) {
+                INT16 frontLeftValue = (INT16)(leftFrontBuffer[i]*balanceFactorFrontLeft);
+                INT16 frontRightValue = (INT16)(rightFrontBuffer[i]*balanceFactorFrontRight);
+                INT16 rearLeftValue = (INT16)(leftRearBuffer[i]*balanceFactorRearLeft);
+                INT16 rearRightValue = (INT16)(rightRearBuffer[i]*balanceFactorRearRight);
+
+                // Check game audio type
+                switch (AudioType) {
+                case Game::MONO: {
+                    INT16 monovalue = ((INT32)frontLeftValue + (INT32)frontRightValue)>>1;
+                    *p++ = monovalue;
+                    *p++ = monovalue;
+                    *p++ = monovalue;
+                    *p++ = monovalue;
+                } break;
+
+                case Game::STEREO_LR:
+                case Game::STEREO_RL: {
+                    INT16 leftvalue =  ((INT32)frontLeftValue + (INT32)frontRightValue)>>1;
+                    INT16 rightvalue =  ((INT32)rearLeftValue + (INT32)rearRightValue)>>1;
+                    if (flipStereo) // swap left and right channels
+                    {
+                        *p++ = rightvalue;
+                        *p++ = leftvalue;
+                        *p++ = rightvalue;
+                        *p++ = leftvalue;
+                    } else {
+                        *p++ = leftvalue;
+                        *p++ = rightvalue;
+                        *p++ = leftvalue;
+                        *p++ = rightvalue;
+                    }
+                } break;
+
+                case Game::QUAD_1_FLR_2_RLR:
+                case Game::QUAD_1_FRL_2_RRL: {
+                    // Normal channels Front Left/Right then Rear Left/Right
+                    if (flipStereo) // swap left and right channels
+                    {
+                        *p++ = frontRightValue;
+                        *p++ = frontLeftValue;
+                        *p++ = rearRightValue;
+                        *p++ = rearLeftValue;
+                    } else {
+                        *p++ = frontLeftValue;
+                        *p++ = frontRightValue;
+                        *p++ = rearLeftValue;
+                        *p++ = rearRightValue;
+                    }
+                } break;
+
+                case Game::QUAD_1_RLR_2_FLR:
+                case Game::QUAD_1_RRL_2_FRL:
+                    // Reversed channels Front/Rear Left then Front/Rear Right
+                    if (flipStereo) // swap left and right channels
+                    {
+                        *p++ = rearRightValue;
+                        *p++ = rearLeftValue;
+                        *p++ = frontRightValue;
+                        *p++ = frontLeftValue;
+                    } else {
+                        *p++ = rearLeftValue;
+                        *p++ = rearRightValue;
+                        *p++ = frontLeftValue;
+                        *p++ = frontRightValue;
+                    }
+                    break;
+
+                case Game::QUAD_1_LR_2_FR_MIX:
+                    // Split mix: one goes to left/right, other front/rear (mono)
+                    // =>Remix all!
+                    INT16 newfrontLeftValue = (INT16)(((INT32)frontLeftValue + (INT32)rearLeftValue)>>1);
+                    INT16 newfrontRightValue = (INT16)(((INT32)frontLeftValue + (INT32)rearRightValue)>>1);
+                    INT16 newrearLeftValue = (INT16)(((INT32)frontRightValue + (INT32)rearLeftValue)>>1);
+                    INT16 newrearRightValue = (INT16)(((INT32)frontRightValue + (INT32)rearRightValue)>>1);
+
+                    if (flipStereo) // swap left and right channels
+                    {
+                        *p++ = newfrontRightValue;
+                        *p++ = newfrontLeftValue;
+                        *p++ = newrearRightValue;
+                        *p++ = newrearLeftValue;
+                    } else {
+                        *p++ = newfrontLeftValue;
+                        *p++ = newfrontRightValue;
+                        *p++ = newrearLeftValue;
+                        *p++ = newrearRightValue;
+                    }
+                    break;
                 }
             }
         }
@@ -273,21 +377,31 @@ static void LogAudioInfo(SDL_AudioSpec *fmt)
 }
 */
 
+/// <summary>
+/// Prepare audio subsystem on host.
+/// The requested channels is deduced, and SDL will make sure it is compatible with this.
+/// </summary>
+/// <param name="config"></param>
+/// <returns></returns>
 bool OpenAudio(const Util::Config::Node& config)
 {
     s_config = &config;
     // Initialize SDL audio sub-system
     if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
         return ErrorLog("Unable to initialize SDL audio sub-system: %s\n", SDL_GetError());
-    
-    // Number of host channels to use (choice limited to 1,2,4)
-    int reqChannels = s_config->Get("NbSoundChannels").ValueAs<int>();
-    switch (reqChannels) {
-        case 1:
-        case 2:
-        case 4:
-            nbHostAudioChannels = reqChannels;
-            break;
+
+    // Number of channels requested in config (default is 4)
+    nbHostAudioChannels = (int)s_config->Get("NbSoundChannels").ValueAs<int>();
+
+    // If game is only stereo or mono, enforce host to reduce number of channels
+    switch (AudioType) {
+    case Game::MONO:
+        nbHostAudioChannels = std::min(nbHostAudioChannels, 1);
+        break;
+    case Game::STEREO_LR:
+    case Game::STEREO_RL:
+        nbHostAudioChannels = std::min(nbHostAudioChannels, 2);
+        break;
     }
     // Mixer Balance
     float balancelr = (float)s_config->Get("BalanceLeftRight").ValueAs<float>();
@@ -312,34 +426,27 @@ bool OpenAudio(const Util::Config::Node& config)
     balanceFactorRearRight  = (BalanceLeftRight>0.0?1.0-BalanceLeftRight:1.0)*(BalanceFrontRear>0?1.0-BalanceFrontRear:1.0);
 
     // Set up audio specification
-    SDL_AudioSpec desired, obtained;
+    SDL_AudioSpec desired;
     memset(&desired, 0, sizeof(SDL_AudioSpec));
-    memset(&obtained, 0, sizeof(SDL_AudioSpec));
     desired.freq = SAMPLE_RATE_M3;
+    // Number of host channels to use (choice limited to 1,2,4)
     desired.channels = nbHostAudioChannels;
     desired.format = AUDIO_S16SYS;
     desired.samples = playSamples;
     desired.callback = PlayCallback;
 
-    // Force SDL to use the format we requested; it will convert if necessary
-    //if (SDL_OpenAudio(&desired, &obtained) < 0) {
-   	if (SDL_OpenAudio(&desired, nullptr) < 0) {
-        if (NUM_CHANNELS_M3==2) {
+    // Now force SDL to use the format we requested (nullptr); it will convert if necessary
+    if (SDL_OpenAudio(&desired, nullptr) < 0) {
+        if (desired.channels==2) {
             return ErrorLog("Unable to open 44.1KHz 2-channel audio with SDL: %s\n", SDL_GetError());
-        } else if (NUM_CHANNELS_M3==4) {
+        } else if (desired.channels==4) {
             return ErrorLog("Unable to open 44.1KHz 4-channel audio with SDL: %s\n", SDL_GetError());
         } else {
             return ErrorLog("Unable to open 44.1KHz channel audio with SDL: %s\n", SDL_GetError());
         }
-    } else {
-        char buff[255];
-        sprintf(buff, "SDL Audio opened with %d channels (max %d channels)\n", nbHostAudioChannels, ((int)NUM_CHANNELS_M3));
-        nbHostAudioChannels = desired.channels;
-        DebugLog(buff);
     }
-    
-    
-    float soundFreq_Hz = s_config->Get("SoundFreq").ValueAs<float>();
+
+    float soundFreq_Hz = (float)s_config->Get("SoundFreq").ValueAs<float>();
     if (soundFreq_Hz>MAX_SND_FREQ)
         soundFreq_Hz = MAX_SND_FREQ;
     if (soundFreq_Hz<MIN_SND_FREQ)
@@ -348,12 +455,9 @@ bool OpenAudio(const Util::Config::Node& config)
     bytes_per_sample_host = (nbHostAudioChannels * sizeof(INT16));
     bytes_per_frame_host =  (samples_per_frame_host * bytes_per_sample_host);
 
-    // Put new code in condition pair until stable
-#if true
 
     // Create audio buffer
     uint32_t bufferSize = ((SAMPLE_RATE_M3 * latency) / MAX_LATENCY) * bytes_per_sample_host;
-    //static_assert(bufferSize % BYTES_PER_SAMPLE == 0, "must be an integer multiple of the sample size");
     if (!(bufferSize % bytes_per_sample_host == 0)) {
         return ErrorLog("must be an integer multiple of the sample size\n");
     }
@@ -380,37 +484,7 @@ bool OpenAudio(const Util::Config::Node& config)
     if (!((midpointAfterFirstFrame % nbHostAudioChannels*sizeof(INT16)) == 0)) {
         return ErrorLog("must be an integer multiple of the sample size\n");
     }
-    //static_assert(endOfBuffer % BYTES_PER_SAMPLE == 0, "make sure we are aligned to a sample boundary otherwise underrun/overrun adjustment will end up shifting playback by one channel causing stereo to flip");
-    //static_assert(midpointAfterFirstFrame % BYTES_PER_SAMPLE == 0, "error");
 
-#else
-    
-    
-    // Create audio buffer
-    constexpr uint32_t bufferSize = SAMPLE_RATE * BYTES_PER_SAMPLE_M3 * latency / MAX_LATENCY;
-    static_assert(bufferSize % BYTES_PER_SAMPLE_M3 == 0, "must be an integer multiple of the sample size");
-    audioBufferSize = bufferSize;
-
-    int minBufferSize = 3 * BYTES_PER_FRAME_M3;
-    audioBufferSize = std::max<int>(minBufferSize, audioBufferSize);
-    audioBuffer = new(std::nothrow) INT8[audioBufferSize];
-    if (audioBuffer == NULL) {
-        float audioBufMB = (float)audioBufferSize / (float)0x100000;
-        return ErrorLog("Insufficient memory for audio latency buffer (need %1.1f MB).", audioBufMB);
-    }
-    memset(audioBuffer, 0, sizeof(INT8) * audioBufferSize);
-
-    // Set initial play position to be beginning of buffer and initial write position to be half-way into buffer
-    playPos = 0;
-    constexpr uint32_t endOfBuffer = bufferSize - BYTES_PER_FRAME_M3;
-    constexpr uint32_t midpointAfterFirstFrameUnaligned = BYTES_PER_FRAME_M3 + (bufferSize - BYTES_PER_FRAME_M3) / 2;
-    constexpr uint32_t extraPaddingNeeded = (BYTES_PER_SAMPLE_M3 - midpointAfterFirstFrameUnaligned % BYTES_PER_SAMPLE_M3) % BYTES_PER_SAMPLE_M3;
-    constexpr uint32_t midpointAfterFirstFrame = midpointAfterFirstFrameUnaligned + extraPaddingNeeded;
-    static_assert(endOfBuffer % BYTES_PER_SAMPLE_M3 == 0, "make sure we are aligned to a sample boundary otherwise underrun/overrun adjustment will end up shifting playback by one channel causing stereo to flip");
-    static_assert(midpointAfterFirstFrame % BYTES_PER_SAMPLE_M3 == 0, "error");
-
-#endif
-    
     writePos = std::min<int>(endOfBuffer, midpointAfterFirstFrame);
     writeWrapped = false;
 

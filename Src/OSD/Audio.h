@@ -30,12 +30,14 @@
 
 #include "Types.h"
 #include "Util/NewConfig.h"
+#include "Game.h"
 
 typedef void (*AudioCallbackFPtr)(void *data);
 
 extern void SetAudioCallback(AudioCallbackFPtr callback, void *data);
 
 extern void SetAudioEnabled(bool enabled);
+extern void SetAudioType(Game::AudioTypes type);
 
 /*
  * OpenAudio()
