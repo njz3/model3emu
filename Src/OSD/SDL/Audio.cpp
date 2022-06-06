@@ -30,24 +30,25 @@
   * initial set up of the buffer is correct.
   *
   * Model 3 Audio is always 4 channels. SCSP1 is usually for each front
-  * channels (on CN7 connector) and SCSP2 for rear channels (on CN8).
+  * channels (on CN8 connector) and SCSP2 for rear channels (on CN7).
   * The downmix to 2 channels will be performed here in case supermodel audio
   * subsystem does not allow such playback.
-  * The default DSB board is supposed to be plug and mixed with the rear output
-  * channel. This rear channel is usually plugged to the gullbow speakers that
+  * The default DSB board is supposed to be plug and mixed with the front output
+  * channel. The rear channel is usually plugged to the gullbow speakers that
   * are present in most model 3 racing cabinets, while front speakers are only
   * present in Daytona2, Scud Race, Sega Rally 2.
   * As each cabinet as its own wiring, with different mixing, the games.xml
   * database will provide which can of mixing should be applied for each game.
   *
   * From twin uk cabinet diagrams, at least:
-  * - lemans24: only stereo on rear speakers (gullbox) on SCSP2/CN8.
-  * - scud race: DSB mixed with SCSP1/CN7 for rear speakers (gullbox), front
-  *   connected to SCSP2/CN8.
-  * - daytona2: rear on SCSP1/CN7, front on SCSP2/CN8
-  * - srally2: SCSP1/CN7 gives left/right, and SCSP/CN8 is split in 2 channels:
+  * - lemans24: only stereo on rear speakers (gullbox) on front channels SCSP1/CN8.
+  * - scud race: DSB mixed with SCSP2/CN7 for rear (gullbox) speakers, front
+  *   connected to SCSP1/CN8.
+  * - daytona2: front on SCSP1/CN8, rear on SCSP2/CN7
+  * - srally2: SCSP2/CN7 gives left/right, and SCSP1/CN8 is split in 2 channels:
   *   mono front, mono rear. These two channels are them mixed with L/R to give
   *   the quad output.
+  * - oceanhun: SCSP1/CN8 and SCSP2/CN7 are mixed together for stereo output.
   * Others are unknown so far, but it is expected that most Step 2.x games should
   * have quad output.
   */
@@ -139,6 +140,16 @@ void SetAudioType(Game::AudioTypes type)
 void SetAudioEnabled(bool newEnabled)
 {
     enabled = newEnabled;
+}
+
+inline INT16 AddAndClampINT16(INT32 x, INT32 y)
+{
+    INT32 sum = x+y;
+    if (sum>INT16_MAX)
+        sum = INT16_MAX;
+    if (sum<INT16_MIN)
+        sum = INT16_MIN;
+    return (INT16)sum;
 }
 
 static void PlayCallback(void* data, Uint8* stream, int len)
@@ -242,8 +253,9 @@ static void MixChannels(unsigned numSamples, INT16* leftFrontBuffer, INT16* righ
     if (nbHostAudioChannels == 1) {
         for (unsigned i = 0; i < numSamples; i++) {
             // TODO: these should probably be clipped!
-            //INT16 monovalue = (INT16)(((INT32)leftFrontBuffer[i] + (INT32)rightFrontBuffer[i] + (INT32)leftRearBuffer[i] + (INT32)rightRearBuffer[i]) >> 2);
-            INT16 monovalue = (INT16)(((INT32)(leftFrontBuffer[i]*balanceFactorFrontLeft) + (INT32)(rightFrontBuffer[i]*balanceFactorFrontRight) + (INT32)(leftRearBuffer[i]*balanceFactorRearLeft) + (INT32)(rightRearBuffer[i]*balanceFactorRearRight)) >> 2);
+            //INT16 monovalue = (INT16)(((INT32)leftFrontBuffer[i] + (INT32)rightFrontBuffer[i] + (INT32)leftRearBuffer[i] + (INT32)rightRearBuffer[i]));
+            INT16 monovalue = AddAndClampINT16(((INT32)leftFrontBuffer[i])*balanceFactorFrontLeft + ((INT32)rightFrontBuffer[i])*balanceFactorFrontRight,
+                                               ((INT32)leftRearBuffer[i])*balanceFactorRearLeft   + ((INT32)rightRearBuffer[i])*balanceFactorRearRight);
             *p++ = monovalue;
         }
     } else {
@@ -259,8 +271,8 @@ static void MixChannels(unsigned numSamples, INT16* leftFrontBuffer, INT16* righ
         // Now order channels according to audio type
         if (nbHostAudioChannels == 2) {
             for (unsigned i = 0; i < numSamples; i++) {
-                INT16 leftvalue = (INT16)(((INT32)(leftFrontBuffer[i]*balanceFactorFrontLeft) + (INT32)(leftRearBuffer[i]*balanceFactorRearLeft))>>1);
-                INT16 rightvalue = (INT16)(((INT32)(rightFrontBuffer[i]*balanceFactorFrontRight) + (INT32)(rightRearBuffer[i]*balanceFactorRearRight))>>1);
+                INT16 leftvalue  = AddAndClampINT16(leftFrontBuffer[i]*balanceFactorFrontLeft,   leftRearBuffer[i]*balanceFactorRearLeft);
+                INT16 rightvalue = AddAndClampINT16(rightFrontBuffer[i]*balanceFactorFrontRight, rightRearBuffer[i]*balanceFactorRearRight);
                 if (flipStereo) // swap left and right channels
                 {
                     *p++ = rightvalue;
@@ -280,7 +292,7 @@ static void MixChannels(unsigned numSamples, INT16* leftFrontBuffer, INT16* righ
                 // Check game audio type
                 switch (AudioType) {
                 case Game::MONO: {
-                    INT16 monovalue = ((INT32)frontLeftValue + (INT32)frontRightValue)>>1;
+                    INT16 monovalue = AddAndClampINT16(AddAndClampINT16(frontLeftValue, frontRightValue), AddAndClampINT16(rearLeftValue, rearRightValue));
                     *p++ = monovalue;
                     *p++ = monovalue;
                     *p++ = monovalue;
@@ -289,8 +301,8 @@ static void MixChannels(unsigned numSamples, INT16* leftFrontBuffer, INT16* righ
 
                 case Game::STEREO_LR:
                 case Game::STEREO_RL: {
-                    INT16 leftvalue =  ((INT32)frontLeftValue + (INT32)frontRightValue)>>1;
-                    INT16 rightvalue =  ((INT32)rearLeftValue + (INT32)rearRightValue)>>1;
+                    INT16 leftvalue =  AddAndClampINT16(frontLeftValue, frontRightValue);
+                    INT16 rightvalue = AddAndClampINT16(rearLeftValue,  rearRightValue);
                     if (flipStereo) // swap left and right channels
                     {
                         *p++ = rightvalue;
@@ -342,10 +354,10 @@ static void MixChannels(unsigned numSamples, INT16* leftFrontBuffer, INT16* righ
                 case Game::QUAD_1_LR_2_FR_MIX:
                     // Split mix: one goes to left/right, other front/rear (mono)
                     // =>Remix all!
-                    INT16 newfrontLeftValue = (INT16)(((INT32)frontLeftValue + (INT32)rearLeftValue)>>1);
-                    INT16 newfrontRightValue = (INT16)(((INT32)frontLeftValue + (INT32)rearRightValue)>>1);
-                    INT16 newrearLeftValue = (INT16)(((INT32)frontRightValue + (INT32)rearLeftValue)>>1);
-                    INT16 newrearRightValue = (INT16)(((INT32)frontRightValue + (INT32)rearRightValue)>>1);
+                    INT16 newfrontLeftValue = AddAndClampINT16(frontLeftValue, rearLeftValue);
+                    INT16 newfrontRightValue = AddAndClampINT16(frontLeftValue, rearRightValue);
+                    INT16 newrearLeftValue = AddAndClampINT16(frontRightValue, rearLeftValue);
+                    INT16 newrearRightValue = AddAndClampINT16(frontRightValue, rearRightValue);
 
                     if (flipStereo) // swap left and right channels
                     {
