@@ -1706,7 +1706,7 @@ void SCSP_DoMasterSamples(int nsamples)
 			}
 		}
 
-		if (DAC18B(SCSP))
+		if (DAC18B((&SCSP[0])))
 		{
 			smpfl = ICLIP18(smpfl);
 			smpfr = ICLIP18(smpfr);
@@ -1719,12 +1719,16 @@ void SCSP_DoMasterSamples(int nsamples)
 		*buffl++ = ICLIP16(smpfl);
 		*buffr++ = ICLIP16(smpfr);
 
-		if (HasSlaveSCSP) {
-			if (DAC18B(SCSP)) {
+		if (HasSlaveSCSP)
+		{
+			if (DAC18B((&SCSPs[1])))
+			{
 				smprl = ICLIP18(smprl);
 				smprr = ICLIP18(smprr);
-			} else {
-				smprl = ICLIP16(smprl >> 2);
+			}
+			else
+			{
+ 				smprl = ICLIP16(smprl >> 2);
 				smprr = ICLIP16(smprr >> 2);
 			}
 		}
