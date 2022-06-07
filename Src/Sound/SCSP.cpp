@@ -1719,22 +1719,23 @@ void SCSP_DoMasterSamples(int nsamples)
 		*buffl++ = ICLIP16(smpfl);
 		*buffr++ = ICLIP16(smpfr);
 
-		if (DAC18B((&SCSP[1]))) {
-			smprl = ICLIP18(smprl);
-			smprr = ICLIP18(smprr);
-		} else {
-			smprl = ICLIP16(smprl >> 2);
-			smprr = ICLIP16(smprr >> 2);
+		if (HasSlaveSCSP) {
+			if (DAC18B(SCSP)) {
+				smprl = ICLIP18(smprl);
+				smprr = ICLIP18(smprr);
+			} else {
+				smprl = ICLIP16(smprl >> 2);
+				smprr = ICLIP16(smprr >> 2);
+			}
 		}
 		*bufrl++ = ICLIP16(smprl);
 		*bufrr++ = ICLIP16(smprr);
 
-
 		SCSP_TimersAddTicks(1);
 		CheckPendingIRQ();
 		lastdiff = Run68kCB(slice - lastdiff);
-		}
 	}
+}
 
 void SCSP_Update()
 {
@@ -2158,6 +2159,8 @@ void SCSP_Deinit(void)
 #endif
 	free(buffertmpfl);
 	free(buffertmpfr);
+	free(buffertmprl);
+	free(buffertmprr);
 	delete MIDILock;
 	buffertmpfl = NULL;
 	buffertmpfr = NULL;

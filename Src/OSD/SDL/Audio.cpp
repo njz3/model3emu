@@ -128,6 +128,11 @@ void SetAudioCallback(AudioCallbackFPtr newCallback, void* newData)
     SDL_UnlockAudio();
 }
 
+void SetAudioEnabled(bool newEnabled)
+{
+    enabled = newEnabled;
+}
+
 /// <summary>
 /// Set game audio mixing type
 /// </summary>
@@ -137,12 +142,7 @@ void SetAudioType(Game::AudioTypes type)
     AudioType = type;
 }
 
-void SetAudioEnabled(bool newEnabled)
-{
-    enabled = newEnabled;
-}
-
-inline INT16 AddAndClampINT16(INT32 x, INT32 y)
+static INT16 AddAndClampINT16(INT32 x, INT32 y)
 {
     INT32 sum = x+y;
     if (sum>INT16_MAX)
@@ -163,14 +163,16 @@ static void PlayCallback(void* data, Uint8* stream, int len)
         adjWritePos += audioBufferSize;
 
     // Check if play position overlaps write position (ie buffer under-run)
-    if (playPos + len > adjWritePos) {
+	if (playPos + len > adjWritePos)
+	{
         underRuns++;
 
         //printf("Audio buffer under-run #%u in PlayCallback(%d) [writePos = %u, writeWrapped = %s, playPos = %u, audioBufferSize = %u]\n",
         //	underRuns, len, writePos, (writeWrapped ? "true" : "false"), playPos, audioBufferSize);
 
         // See what action to take on under-run
-        if (underRunLoop) {
+		if (underRunLoop)
+		{
             // If loop, then move play position back to beginning of data in buffer
             playPos = adjWritePos + bytes_per_frame_host;
 
@@ -181,7 +183,9 @@ static void PlayCallback(void* data, Uint8* stream, int len)
             else
                 // Otherwise, set write wrapped flag as will now appear as if write has wrapped but play position has not
                 writeWrapped = true;
-        } else {
+		}
+		else
+		{
             // Otherwise, just copy silence to audio output stream and exit
             memset(stream, 0, len);
             return;
@@ -194,13 +198,16 @@ static void PlayCallback(void* data, Uint8* stream, int len)
     UINT32 len2;
 
     // Check if play region extends past end of buffer
-    if (playPos + len > audioBufferSize) {
+	if (playPos + len > audioBufferSize)
+	{
         // If so, split play region into two
         src1 = audioBuffer + playPos;
         src2 = audioBuffer;
         len1 = audioBufferSize - playPos;
         len2 = len - len1;
-    } else {
+	}
+	else
+	{
         // Otherwise, just copy whole region
         src1 = audioBuffer + playPos;
         src2 = 0;
@@ -209,7 +216,8 @@ static void PlayCallback(void* data, Uint8* stream, int len)
     }
 
     // Check if audio is enabled
-    if (enabled) {
+	if (enabled)
+	{
         // If so, copy play region into audio output stream
         memcpy(stream, src1, len1);
 
@@ -217,7 +225,8 @@ static void PlayCallback(void* data, Uint8* stream, int len)
         if (!underRunLoop)
             memset(src1, 0, len1);
 
-        if (len2) {
+		if (len2)
+		{
             // If region was split into two, copy second half into audio output stream as well
             memcpy(stream + len1, src2, len2);
 
@@ -225,7 +234,8 @@ static void PlayCallback(void* data, Uint8* stream, int len)
             if (!underRunLoop)
                 memset(src2, 0, len2);
         }
-    } else
+	}
+	else
         // Otherwise, just copy silence to audio output stream
         memset(stream, 0, len);
 
@@ -235,7 +245,8 @@ static void PlayCallback(void* data, Uint8* stream, int len)
     bool bufferFull = adjWritePos + 2 * bytes_per_frame_host > playPos + audioBufferSize;
 
     // Check if play position has moved past end of buffer
-    if (playPos >= audioBufferSize) {
+	if (playPos >= audioBufferSize)
+	{
         // If so, wrap it around to beginning again and reset write wrapped flag
         playPos -= audioBufferSize;
         writeWrapped = false;
@@ -509,8 +520,6 @@ bool OpenAudio(const Util::Config::Node& config)
     return OKAY;
 }
 
-//static INT16 mixBuffer[NUM_CHANNELS_M3 * SAMPLES_PER_FRAME];
-
 bool OutputAudio(unsigned numSamples, INT16* leftFrontBuffer, INT16* rightFrontBuffer, INT16* leftRearBuffer, INT16* rightRearBuffer, bool flipStereo)
 {
     //printf("OutputAudio(%u) [writePos = %u, writeWrapped = %s, playPos = %u, audioBufferSize = %u]\n",
@@ -542,14 +551,16 @@ bool OutputAudio(unsigned numSamples, INT16* leftFrontBuffer, INT16* rightFrontB
         writePos += audioBufferSize;
 
     // Check if play region has caught up with write position and now overlaps it (ie buffer under-run)
-    if (playEndPos > writePos) {
+	if (playEndPos > writePos)
+	{
         underRuns++;
 
         //printf("Audio buffer under-run #%u in OutputAudio(%u) [writePos = %u, writeWrapped = %s, playPos = %u, audioBufferSize = %u, numBytes = %u]\n",
         //	underRuns, numSamples, writePos, (writeWrapped ? "true" : "false"), playPos, audioBufferSize, numBytes);
 
         // See what action to take on under-run
-        if (underRunLoop) {
+		if (underRunLoop)
+		{
             // If loop, then move play position back to beginning of data in buffer
             playPos = writePos + numBytes + bytes_per_frame_host;
 
@@ -557,16 +568,21 @@ bool OutputAudio(unsigned numSamples, INT16* leftFrontBuffer, INT16* rightFrontB
             if (playPos >= audioBufferSize)
                 // If so, wrap it around to beginning again (but keep write wrapped flag as before)
                 playPos -= audioBufferSize;
-            else {
+			else
+			{
                 // Otherwise, set write wrapped flag as will now appear as if write has wrapped but play position has not
                 writeWrapped = true;
                 writePos += audioBufferSize;
             }
-        } else {
+		}
+		else
+		{
             // Otherwise, bump write position forward in chunks until it is past end of play region
-            do {
+			do
+			{
                 writePos += numBytes;
-            } while (playEndPos > writePos);
+			}
+			while (playEndPos > writePos);
         }
     }
 
@@ -580,7 +596,8 @@ bool OutputAudio(unsigned numSamples, INT16* leftFrontBuffer, INT16* rightFrontB
         writePos -= audioBufferSize;
 
     // Handle buffer over-run
-    if (overRun) {
+	if (overRun)
+	{
         overRuns++;
 
         //printf("Audio buffer over-run #%u in OutputAudio(%u) [writePos = %u, writeWrapped = %s, playPos = %u, audioBufferSize = %u, numBytes = %u]\n",
@@ -599,13 +616,16 @@ bool OutputAudio(unsigned numSamples, INT16* leftFrontBuffer, INT16* rightFrontB
     UINT32 len2;
 
     // Check if write region extends past end of buffer
-    if (writePos + numBytes > audioBufferSize) {
+	if (writePos + numBytes > audioBufferSize)
+	{
         // If so, split write region into two
         dst1 = audioBuffer + writePos;
         dst2 = audioBuffer;
         len1 = audioBufferSize - writePos;
         len2 = numBytes - len1;
-    } else {
+	}
+	else
+	{
         // Otherwise, just copy whole region
         dst1 = audioBuffer + writePos;
         dst2 = 0;
@@ -622,7 +642,8 @@ bool OutputAudio(unsigned numSamples, INT16* leftFrontBuffer, INT16* rightFrontB
     bytesRemaining -= bytesToCopy;
     src = (INT16*)((UINT8*)src + bytesToCopy);
 
-    if (bytesRemaining) {
+	if (bytesRemaining)
+	{
         // If write region was split into two, copy second half of chunk into buffer as well
         bytesToCopy = (bytesRemaining > len2 ? len2 : bytesRemaining);
         memcpy(dst2, src, bytesToCopy);
@@ -632,7 +653,8 @@ bool OutputAudio(unsigned numSamples, INT16* leftFrontBuffer, INT16* rightFrontB
     writePos += numBytes;
 
     // Check if write position has moved past end of buffer
-    if (writePos >= audioBufferSize) {
+	if (writePos >= audioBufferSize)
+	{
         // If so, wrap it around to beginning again and set write wrapped flag
         writePos -= audioBufferSize;
         writeWrapped = true;
@@ -652,7 +674,8 @@ void CloseAudio()
     SDL_CloseAudio();
 
     // Delete audio buffer
-    if (audioBuffer != NULL) {
+	if (audioBuffer != NULL)
+	{
         delete[] audioBuffer;
         audioBuffer = NULL;
     }
