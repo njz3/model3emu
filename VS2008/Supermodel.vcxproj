@@ -379,7 +379,7 @@ xcopy /D /Y "$(ProjectDir)\SDLnet\$(Platform)\$(Configuration)\SDL2_net.dll" "$(
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <Optimization>Full</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <AdditionalIncludeDirectories>..\Src;..\Src\OSD;..\Src\OSD\SDL;..\Src\OSD\Windows;..\Libraries\zlib-1.2.11;..\Libraries\SDL2-2.0.12\include;..\Libraries\SDL2_net-2.0.1;..\Libraries\lua-5.4.2\src;..\Src\Pkgs;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SUPERMODEL_WIN32;INLINE=static __inline;_MBCS;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC;NET_BOARD</PreprocessorDefinitions>
