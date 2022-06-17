@@ -89,10 +89,10 @@ static int bytes_per_frame_host = BYTES_PER_FRAME_M3;
 float BalanceLeftRight = 0; // 0 mid balance, 100: left only,  -100:right only 
 float BalanceFrontRear = 0; // 0 mid balance, 100: front only, -100:right only 
 // Mixer factor (depends on values above)
-float balanceFactorFrontLeft  = 1.0;
-float balanceFactorFrontRight = 1.0;
-float balanceFactorRearLeft   = 1.0;
-float balanceFactorRearRight  = 1.0;
+float balanceFactorFrontLeft  = 1.0f;
+float balanceFactorFrontRight = 1.0f;
+float balanceFactorRearLeft   = 1.0f;
+float balanceFactorRearRight  = 1.0f;
 
 static bool enabled = true;         // True if sound output is enabled
 static constexpr unsigned latency = 20;       // Audio latency to use (ie size of audio buffer) as percentage of max buffer size
@@ -145,10 +145,24 @@ void SetAudioType(Game::AudioTypes type)
 static INT16 AddAndClampINT16(INT32 x, INT32 y)
 {
     INT32 sum = x+y;
-    if (sum>INT16_MAX)
+    if (sum > INT16_MAX) {
         sum = INT16_MAX;
-    if (sum<INT16_MIN)
+    }
+    if (sum < INT16_MIN) {
         sum = INT16_MIN;
+    }
+    return (INT16)sum;
+}
+
+static INT16 MixINT16(INT32 x, INT32 y)
+{
+    INT32 sum = (x + y)>>1;
+    if (sum > INT16_MAX) {
+        sum = INT16_MAX;
+    }
+    if (sum < INT16_MIN) {
+        sum = INT16_MIN;
+    }
     return (INT16)sum;
 }
 
@@ -263,10 +277,9 @@ static void MixChannels(unsigned numSamples, INT16* leftFrontBuffer, INT16* righ
 
     if (nbHostAudioChannels == 1) {
         for (unsigned i = 0; i < numSamples; i++) {
-            // TODO: these should probably be clipped!
-            //INT16 monovalue = (INT16)(((INT32)leftFrontBuffer[i] + (INT32)rightFrontBuffer[i] + (INT32)leftRearBuffer[i] + (INT32)rightRearBuffer[i]));
-            INT16 monovalue = AddAndClampINT16(((INT32)leftFrontBuffer[i])*balanceFactorFrontLeft + ((INT32)rightFrontBuffer[i])*balanceFactorFrontRight,
-                                               ((INT32)leftRearBuffer[i])*balanceFactorRearLeft   + ((INT32)rightRearBuffer[i])*balanceFactorRearRight);
+            INT16 monovalue = MixINT16(
+                MixINT16((INT32)(leftFrontBuffer[i] * balanceFactorFrontLeft), (INT32)(rightFrontBuffer[i] * balanceFactorFrontRight)),
+                MixINT16((INT32)(leftRearBuffer[i] * balanceFactorRearLeft), (INT32)(rightRearBuffer[i] * balanceFactorRearRight)));
             *p++ = monovalue;
         }
     } else {
@@ -282,8 +295,8 @@ static void MixChannels(unsigned numSamples, INT16* leftFrontBuffer, INT16* righ
         // Now order channels according to audio type
         if (nbHostAudioChannels == 2) {
             for (unsigned i = 0; i < numSamples; i++) {
-                INT16 leftvalue  = AddAndClampINT16(leftFrontBuffer[i]*balanceFactorFrontLeft,   leftRearBuffer[i]*balanceFactorRearLeft);
-                INT16 rightvalue = AddAndClampINT16(rightFrontBuffer[i]*balanceFactorFrontRight, rightRearBuffer[i]*balanceFactorRearRight);
+                INT16 leftvalue = MixINT16((INT32)(leftFrontBuffer[i] * balanceFactorFrontLeft), (INT32)(leftRearBuffer[i] * balanceFactorRearLeft));
+                INT16 rightvalue = MixINT16((INT32)(rightFrontBuffer[i]*balanceFactorFrontRight), (INT32)(rightRearBuffer[i]*balanceFactorRearRight));
                 if (flipStereo) // swap left and right channels
                 {
                     *p++ = rightvalue;
@@ -303,7 +316,7 @@ static void MixChannels(unsigned numSamples, INT16* leftFrontBuffer, INT16* righ
                 // Check game audio type
                 switch (AudioType) {
                 case Game::MONO: {
-                    INT16 monovalue = AddAndClampINT16(AddAndClampINT16(frontLeftValue, frontRightValue), AddAndClampINT16(rearLeftValue, rearRightValue));
+                    INT16 monovalue = MixINT16(MixINT16(frontLeftValue, frontRightValue), MixINT16(rearLeftValue, rearRightValue));
                     *p++ = monovalue;
                     *p++ = monovalue;
                     *p++ = monovalue;
@@ -312,8 +325,8 @@ static void MixChannels(unsigned numSamples, INT16* leftFrontBuffer, INT16* righ
 
                 case Game::STEREO_LR:
                 case Game::STEREO_RL: {
-                    INT16 leftvalue =  AddAndClampINT16(frontLeftValue, frontRightValue);
-                    INT16 rightvalue = AddAndClampINT16(rearLeftValue,  rearRightValue);
+                    INT16 leftvalue =  MixINT16(frontLeftValue, frontRightValue);
+                    INT16 rightvalue = MixINT16(rearLeftValue,  rearRightValue);
                     if (flipStereo) // swap left and right channels
                     {
                         *p++ = rightvalue;
@@ -365,10 +378,10 @@ static void MixChannels(unsigned numSamples, INT16* leftFrontBuffer, INT16* righ
                 case Game::QUAD_1_LR_2_FR_MIX:
                     // Split mix: one goes to left/right, other front/rear (mono)
                     // =>Remix all!
-                    INT16 newfrontLeftValue = AddAndClampINT16(frontLeftValue, rearLeftValue);
-                    INT16 newfrontRightValue = AddAndClampINT16(frontLeftValue, rearRightValue);
-                    INT16 newrearLeftValue = AddAndClampINT16(frontRightValue, rearLeftValue);
-                    INT16 newrearRightValue = AddAndClampINT16(frontRightValue, rearRightValue);
+                    INT16 newfrontLeftValue = MixINT16(frontLeftValue, rearLeftValue);
+                    INT16 newfrontRightValue = MixINT16(frontLeftValue, rearRightValue);
+                    INT16 newrearLeftValue = MixINT16(frontRightValue, rearLeftValue);
+                    INT16 newrearRightValue = MixINT16(frontRightValue, rearRightValue);
 
                     if (flipStereo) // swap left and right channels
                     {
@@ -443,10 +456,10 @@ bool OpenAudio(const Util::Config::Node& config)
     balancefr *= 0.01f;
     BalanceFrontRear = balancefr;
 
-    balanceFactorFrontLeft  = (BalanceLeftRight<0.0?1.0+BalanceLeftRight:1.0)*(BalanceFrontRear<0?1.0+BalanceFrontRear:1.0);
-    balanceFactorFrontRight = (BalanceLeftRight>0.0?1.0-BalanceLeftRight:1.0)*(BalanceFrontRear<0?1.0+BalanceFrontRear:1.0);
-    balanceFactorRearLeft   = (BalanceLeftRight<0.0?1.0+BalanceLeftRight:1.0)*(BalanceFrontRear>0?1.0-BalanceFrontRear:1.0);
-    balanceFactorRearRight  = (BalanceLeftRight>0.0?1.0-BalanceLeftRight:1.0)*(BalanceFrontRear>0?1.0-BalanceFrontRear:1.0);
+    balanceFactorFrontLeft  = (BalanceLeftRight < 0.f ? 1.f + BalanceLeftRight : 1.f) * (BalanceFrontRear < 0 ? 1.f + BalanceFrontRear : 1.f);
+    balanceFactorFrontRight = (BalanceLeftRight > 0.f ? 1.f - BalanceLeftRight : 1.f) * (BalanceFrontRear < 0 ? 1.f + BalanceFrontRear : 1.f);
+    balanceFactorRearLeft   = (BalanceLeftRight < 0.f ? 1.f + BalanceLeftRight : 1.f) * (BalanceFrontRear > 0 ? 1.f - BalanceFrontRear : 1.f);
+    balanceFactorRearRight  = (BalanceLeftRight > 0.f ? 1.f - BalanceLeftRight : 1.f) * (BalanceFrontRear > 0 ? 1.f - BalanceFrontRear : 1.f);
 
     // Set up audio specification
     SDL_AudioSpec desired;
@@ -530,7 +543,7 @@ bool OutputAudio(unsigned numSamples, INT16* leftFrontBuffer, INT16* rightFrontB
     INT16* src;
 
     // Number of samples should never be more than max number of samples per frame
-    if (numSamples > samples_per_frame_host)
+    if (numSamples > (unsigned)samples_per_frame_host)
         numSamples = samples_per_frame_host;
 
     // Mix together left and right channels into single chunk of data
